@@ -5,7 +5,19 @@ from mcp2210 import Mcp2210, Mcp2210GpioDesignation, Mcp2210GpioDirection
 import Laser
 import Mcp
 
-class Painter(socket_x, socket_y, disthor, increm):
+class Painter(socket_x, socket_y, calx, caly, tlaser = 0.025)
+
+    def __init__():
+        self.socket_x = socket_x
+        self.socket_y = socket_y
+        self.distancia_h = distancia_h
+        self.incremento = incremento
+        self.calx = calx
+        self.caly = caly
+
+    def paint_x(distancia, incremento):
+        n_pontos = int(distancia/incremento)
+
 
 
 mcp = Mcp.Mcp()
@@ -21,7 +33,6 @@ vinix = -(disthor/2)*calx
 # viniy = -(disthor/2)*caly
 npontos = int(disthor/increm)
 
-tlaser = 0.025
 
 
 # HOSTY = "192.168.1.10"  # The server's hostname or IP address
