@@ -22,7 +22,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  # Set motor mode
         self.ser.write(b'CN1\r\n')       # Connect to controller 1
 
-    def move(self, angle, speed=80000, acc=20000, dec=20000):
+    def move(self, angle, speed=40000, acc=20000, dec=20000):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -30,12 +30,12 @@ class GoniometerController:
             f'SPH={speed}\r\n',
             f'ACH={acc}\r\n',
             f'DCH={dec}\r\n',
-            b'BGH\r\n',
-            b'MG _BGH\r\n'
+            f'BGH\r\n',
+            f'MG _BGH\r\n'
         ]
 
         for cmd in commands:
-            self.ser.write(cmd.encode())
+            self.ser.write(bytes(cmd, 'utf-8'))
 
         for _ in range(9):
             self.ser.readline()
