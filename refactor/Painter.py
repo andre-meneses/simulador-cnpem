@@ -1,60 +1,62 @@
-#Programa de teste do cabeçote laser
 import socket
 import time
 from mcp2210 import Mcp2210, Mcp2210GpioDesignation, Mcp2210GpioDirection
 import Laser
 import Mcp
 
-class Painter(socket_x, socket_y, calx, caly, tlaser = 0.025)
-
-    def __init__():
+class Painter:
+    def __init__(self, socket_x, socket_y, calx, caly, mcp, tlaser=0.025):
         self.socket_x = socket_x
         self.socket_y = socket_y
-        self.distancia_h = distancia_h
-        self.incremento = incremento
         self.calx = calx
         self.caly = caly
+        self.mcp = mcp
+        self.tlaser = tlaser
 
-    def paint_x(distancia, incremento):
-        n_pontos = int(distancia/incremento)
+    def paint_x(self, distance, increment):
+        num_points = int(distance / increment)
+        start_x = -(distance / 2) * self.calx
+        pos_x = start_x
 
+        for _ in range(num_points):        
+            pos_x_str = f"MWV:{pos_x}\r\n"
+            arr_x = pos_x_str.encode('utf-8')
+            self.socket_x.sendall(arr_x)
+            Laser.switch_laser(self.mcp, 'on')
+            time.sleep(self.tlaser)
+            Laser.switch_laser(self.mcp, 'off')
+            pos_x += increment * self.calx
+            print(pos_x)
 
+    def paint_y(self, distance, increment):
+        num_points = int(distance / increment)
+        start_y = -(distance / 2) * self.caly
+        pos_y = start_y
 
-mcp = Mcp.Mcp()
-   
-#assumindo que na projeção no papel temos que 10v = 111mm
-disthor = 60
-increm = 4
+        for _ in range(num_points):
+            pos_y_str = f"MWV:{pos_y}\r\n"
+            arr_y = pos_y_str.encode('utf-8')
+            self.socket_y.sendall(arr_y)
+            Laser.switch_laser(self.mcp, 'on')
+            time.sleep(self.tlaser)
+            Laser.switch_laser(self.mcp, 'off')
+            pos_y += increment * self.caly
+            print(pos_y)
 
-calx = 20/(113.41+114.21)
-# caly = 20/(153.02+154.22)
+if __name__ == '__main__':
+    host_x = "192.168.0.11"  # Server's IP address
+    port = 10001  # Port used by the server
+    socket_x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        socket_x.connect((host_x, port))
+    except socket.error as e:
+        print(f"Error connecting to socket: {e}")
+        # Handle error appropriately
 
-vinix = -(disthor/2)*calx
-# viniy = -(disthor/2)*caly
-npontos = int(disthor/increm)
-
-
-
-# HOSTY = "192.168.1.10"  # The server's hostname or IP address
-PORT = 10001  # The port used by the server
-
-# sy = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# sy.connect((HOSTY, PORT))
-
-
-HOSTX = "192.168.0.11"  # The server's hostname or IP address
-PORT = 10001  # The port used by the server
-sx = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sx.connect((HOSTX, PORT))
-
-posX = vinix
-for j in range (npontos):        
-    posXst = "MWV:"+str(posX)+"\r\n"
-    arrX = bytes(posXst, 'utf-8')
-    sx.sendall(arrX)
-    Laser.switch_laser(mcp,'on')
-    time.sleep(tlaser)
-    Laser.switch_laser(mcp,'off')
-    posX = posX + increm * calx
-    print(posX)
+    mcp = Mcp.Mcp()
+    calx = 20 / (113.41 + 114.21)
+    caly = 20 / (153.02 + 154.22)
+    
+    painter = Painter(socket_x, None, calx, caly, mcp)  # Adjust as needed
+    painter.paint_x(60, 4)  # Example usage
 
