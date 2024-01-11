@@ -1,7 +1,7 @@
 import socket
 import time
 from mcp2210 import Mcp2210, Mcp2210GpioDesignation, Mcp2210GpioDirection
-import Laser
+from Laser import LaserController
 import Mcp
 
 class Painter:
@@ -12,6 +12,7 @@ class Painter:
         self.caly = caly
         self.mcp = mcp
         self.tlaser = tlaser
+        self.laser = LaserController(mcp)
 
     def paint_x(self, distance, increment):
         num_points = int(distance / increment)
@@ -22,9 +23,9 @@ class Painter:
             pos_x_str = f"MWV:{pos_x}\r\n"
             arr_x = pos_x_str.encode('utf-8')
             self.socket_x.sendall(arr_x)
-            Laser.switch_laser(self.mcp, 'on')
+            self.laser.switch_laser('on')
             time.sleep(self.tlaser)
-            Laser.switch_laser(self.mcp, 'off')
+            self.laser.switch_laser('off')
             pos_x += increment * self.calx
             print(pos_x)
 
