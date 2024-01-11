@@ -30,5 +30,5 @@ def laser_off():
 #    laser_off()
 #    time.sleep(0.1)
 
-laser_off()
+laser_on()
 
