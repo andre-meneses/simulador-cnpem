@@ -2,33 +2,11 @@ import socket
 import time
 from Laser import LaserController
 import Mcp
+import curses
+import numpy as np
 
 class Painter:
-    """
-    This class is designed to control a laser painting system that operates in a two-dimensional space.
-
-    Attributes:
-        socket_x (socket.socket): A socket object for communication with the X-axis controller.
-        socket_y (socket.socket): A socket object for communication with the Y-axis controller.
-        calx (float): Calibration factor for movements along the X-axis.
-        caly (float): Calibration factor for movements along the Y-axis.
-        mcp (Mcp): An object to interface with the MCP2210 chip for controlling the laser.
-        tlaser (float): Time delay for the laser between movements, in seconds.
-        laser (LaserController): An object to control the on/off state of the laser.
-    """
-
     def __init__(self, socket_x, socket_y, calx, caly, mcp, tlaser=0.025):
-        """
-        Initializes a new Painter instance.
-
-        Args:
-            socket_x (socket.socket): Socket for X-axis control.
-            socket_y (socket.socket): Socket for Y-axis control.
-            calx (float): Calibration factor for X-axis.
-            caly (float): Calibration factor for Y-axis.
-            mcp (Mcp): MCP2210 interface object.
-            tlaser (float, optional): Laser time delay. Defaults to 0.025 seconds.
-        """
         self.socket_x = socket_x
         self.socket_y = socket_y
         self.calx = calx
@@ -36,80 +14,132 @@ class Painter:
         self.mcp = mcp
         self.tlaser = tlaser
         self.laser = LaserController(mcp)
+        self.grid = np.zeros((3,3,2)) 
+        # self.grid[0,0,0] = 5.85
+        # self.grid[0,0,1] = -5.55
+        # self.grid[2,2,0] = -4.64
+        # self.grid[2,2,1] = 0.75
 
-    def paint_x(self, distance, increment, axis=1):
-        """
-        Moves the laser along the X-axis and paints over a specified distance with specified increments.
-
-        Args:
-            distance (float): The total distance to move and paint along the X-axis.
-            increment (float): The distance between each point in the painting process along the X-axis.
-        """
-        num_points = int(distance / increment)
-        start_x = -(distance / 2) * self.calx
-        pos_x = start_x
-
-        for _ in range(num_points):        
-            pos_x_str = f"MWV:{pos_x}\r\n"
-            arr_x = pos_x_str.encode('utf-8')
-            self.socket_x.sendall(arr_x)
-            self.laser.switch_laser('on')
-            time.sleep(self.tlaser)
-            self.laser.switch_laser('off')
-            if axis==-1:
-                pos_x -= increment * self.calx
-            else:
-                pos_x += increment * self.calx
-            print(pos_x)
-
-    def paint_y(self, distance, increment, axis=1):
-        """
-        Moves the laser along the Y-axis and paints over a specified distance with specified increments.
-
-        Args:
-            distance (float): The total distance to move and paint along the Y-axis.
-            increment (float): The distance between each point in the painting process along the Y-axis.
-        """
-        num_points = int(distance / increment)
-        start_y = -(distance / 2) * self.caly
-        pos_y = start_y
-
-        for _ in range(num_points):
-            pos_y_str = f"MWV:{pos_y}\r\n"
-            arr_y = pos_y_str.encode('utf-8')
-            self.socket_y.sendall(arr_y)
-            self.laser.switch_laser('on')
-            time.sleep(self.tlaser)
-            self.laser.switch_laser('off')
-
-            if axis==-1:
-                pos_y -= increment * self.caly
-            else:
-                pos_y += increment * self.caly
-
-            print(pos_y)
+    def move(self, axis, position):
+        command = f"MWV:{position}\r\n".encode('utf-8')
+        (self.socket_x if axis == 'x' else self.socket_y).sendall(command)
 
     def paint_test(self):
-        """
-        Conducts a test painting routine by moving the laser in a grid pattern and activating the laser at each grid point.
-        """
-        posY =  -(60 / 2) * self.caly
-        npontos = 15 
-        for i in range(npontos):      
-            posYst = "MWV:"+str(posY)+"\r\n"
-            arrY = bytes(posYst, 'utf-8')  
-            self.socket_y.sendall(arrY)       
-            posX =  -(60 / 2) * self.calx
-            for j in range (npontos):        
-                posXst = "MWV:"+str(posX)+"\r\n"
-                arrX = bytes(posXst, 'utf-8')
-                self.socket_x.sendall(arrX)
+        grid_size = 60
+        points = 15
+        increment = 4
+
+        for i in range(points):
+            posY = (-(grid_size / 2) + i * increment) * self.caly
+            self.move('y', posY)
+            
+            for j in range(points):
+                posX = (-(grid_size / 2) + j * increment) * self.calx
+                self.move('x', posX)
                 self.laser.switch_laser('on')
                 time.sleep(self.tlaser)
                 self.laser.switch_laser('off')
-                posX = posX + 4 * self.calx
-                print("Posição x:", posX)
-            posY = posY + 4 * self.caly        
+
+    def paint_test_rect(self):
+        posY = -9
+        self.laser.switch_laser('on')
+        for i in range(125):
+            self.move('y', posY)
+            posX = 10
+            for j in range(175):
+                self.move('x', posX)
+                posX -= 0.08
+                time.sleep(0.001)
+            posY += 0.08
+        self.laser.switch_laser('off')
+
+    def paint_manual(self, stdscr):
+        posX, posY = 0, 0
+
+        self.move('x', posX)
+        self.move('y', posY)
+
+        curses.noecho()
+        curses.cbreak()
+        stdscr.keypad(True)
+
+        self.laser.switch_laser('on')
+
+        while True:
+            stdscr.clear()
+            stdscr.refresh()
+
+            key = stdscr.getch()
+            movement = 0.15
+
+            if key == curses.KEY_UP:
+                posY -= movement
+            elif key == curses.KEY_DOWN:
+                posY += movement
+            elif key == curses.KEY_LEFT:
+                posX += movement
+            elif key == curses.KEY_RIGHT:
+                posX -= movement
+            elif key == ord('a'):
+                self.grid[0,0,0] = posX 
+                self.grid[1,0,0] = posX 
+                self.grid[2,0,0] = posX 
+
+                self.grid[0,0,1] = posY 
+                self.grid[0,1,1] = posY 
+                self.grid[0,2,1] = posY 
+
+            elif key == ord('c'):
+                self.grid[2,2,0] = posX 
+                self.grid[1,2,0] = posX 
+                self.grid[0,2,0] = posX 
+
+                self.grid[2,2,1] = posY 
+                self.grid[2,1,1] = posY 
+                self.grid[2,0,1] = posY 
+
+            elif key == ord('q'):
+                break
+
+            self.move('x', posX)
+            self.move('y', posY)
+
+        self.laser.switch_laser('off')
+
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+    def interpolate_grid(self):
+        for i in range(3):
+            self.grid[1,i,1] = (self.grid[0,i,1] + self.grid[2,i,1])/2
+
+        for i in range(3):
+            self.grid[i,1,0] = (self.grid[i,2,0] + self.grid[i,0,0])/2
+
+        for i in range(3):
+            for j in range(3):
+                print(f"{self.grid[i,j,0]} ", end='')
+            print("\n")
+
+        for i in range(3):
+            for j in range(3):
+                print(f"{self.grid[i,j,1]}", end='')
+            print("\n")
+
+    def test_calibration(self):
+        for i in range(3):
+            for j in range(3):
+                self.laser.switch_laser('on')
+                self.move('x', self.grid[i,j,0])
+                self.move('y', self.grid[i,j,1])
+                time.sleep(3)
+
+        self.laser.switch_laser('on')
+
+    def kkk(self):
+        self.laser.switch_laser('off')
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
@@ -133,9 +163,14 @@ if __name__ == '__main__':
     painter = Painter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
 
     # painter.paint_test()
-    painter.paint_x(50,2)
-    painter.paint_y(50,2)
-    painter.paint_x(50,2, -1)
-    painter.paint_y(50,2, -1)
-    painter.paint_x(50,2)
+    # painter.paint_x(50,2)
+    # painter.paint_y(50,2)
+    # painter.paint_x(50,2, -1)
+    # painter.paint_y(50,2, -1)
+    # painter.paint_x(50,2)
+    # painter.paint_test_rect()
+    # curses.wrapper(painter.paint_manual)
+    # painter.interpolate_grid()
+    # painter.test_calibration()
+    painter.kkk()
 
