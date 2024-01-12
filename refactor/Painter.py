@@ -24,7 +24,7 @@ class Painter:
         command = f"MWV:{position}\r\n".encode('utf-8')
         (self.socket_x if axis == 'x' else self.socket_y).sendall(command)
 
-    def paint_test(self):
+    def paint_test_1(self):
         grid_size = 60
         points = 15
         increment = 4
@@ -40,7 +40,7 @@ class Painter:
                 time.sleep(self.tlaser)
                 self.laser.switch_laser('off')
 
-    def paint_test_rect(self):
+    def paint_test_2(self):
         posY = -9
         self.laser.switch_laser('on')
         for i in range(125):
@@ -111,22 +111,24 @@ class Painter:
         curses.echo()
         curses.endwin()
 
-    def interpolate_grid(self):
+    def interpolate_grid(self, verbose=False):
         for i in range(3):
             self.grid[1,i,1] = (self.grid[0,i,1] + self.grid[2,i,1])/2
 
         for i in range(3):
             self.grid[i,1,0] = (self.grid[i,2,0] + self.grid[i,0,0])/2
 
-        for i in range(3):
-            for j in range(3):
-                print(f"{self.grid[i,j,0]} ", end='')
-            print("\n")
 
-        for i in range(3):
-            for j in range(3):
-                print(f"{self.grid[i,j,1]}", end='')
-            print("\n")
+        if verbose:
+            for i in range(3):
+                for j in range(3):
+                    print(f"{self.grid[i,j,0]} ", end='')
+                print("\n")
+
+            for i in range(3):
+                for j in range(3):
+                    print(f"{self.grid[i,j,1]}", end='')
+                print("\n")
 
     def test_calibration(self):
         for i in range(3):
@@ -137,9 +139,6 @@ class Painter:
                 time.sleep(3)
 
         self.laser.switch_laser('on')
-
-    def kkk(self):
-        self.laser.switch_laser('off')
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
@@ -163,11 +162,6 @@ if __name__ == '__main__':
     painter = Painter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
 
     # painter.paint_test()
-    # painter.paint_x(50,2)
-    # painter.paint_y(50,2)
-    # painter.paint_x(50,2, -1)
-    # painter.paint_y(50,2, -1)
-    # painter.paint_x(50,2)
     # painter.paint_test_rect()
     # curses.wrapper(painter.paint_manual)
     # painter.interpolate_grid()
