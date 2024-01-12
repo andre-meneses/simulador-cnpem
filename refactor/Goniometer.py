@@ -18,9 +18,9 @@ class GoniometerController:
         return int(message[0])
 
     def _prepare(self):
-        self.ser.write(b'SHH\r\n')       # Stop current motion
-        self.ser.write(b'MTH = -2\r\n')  # Set motor mode
-        self.ser.write(b'CN1\r\n')       # Connect to controller 1
+        self.ser.write(b'SHH\r\n')       
+        self.ser.write(b'MTH = -2\r\n')  
+        self.ser.write(b'CN1\r\n')       
 
     def move(self, angle, speed=40000, acc=20000, dec=20000):
         self._prepare()
