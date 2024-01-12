@@ -15,10 +15,6 @@ class Painter:
         self.tlaser = tlaser
         self.laser = LaserController(mcp)
         self.grid = np.zeros((3,3,2)) 
-        # self.grid[0,0,0] = 5.85
-        # self.grid[0,0,1] = -5.55
-        # self.grid[2,2,0] = -4.64
-        # self.grid[2,2,1] = 0.75
 
     def move(self, axis, position):
         command = f"MWV:{position}\r\n".encode('utf-8')
@@ -117,7 +113,6 @@ class Painter:
 
         for i in range(3):
             self.grid[i,1,0] = (self.grid[i,2,0] + self.grid[i,0,0])/2
-
 
         if verbose:
             for i in range(3):
