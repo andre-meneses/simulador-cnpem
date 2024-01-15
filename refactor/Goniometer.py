@@ -22,7 +22,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=40000, acc=20000, dec=20000):
+    def move(self, angle, speed=40000, acc=20000, dec=20000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -45,9 +45,10 @@ class GoniometerController:
             self.ser.write(b'MG _BGH\r\n')
             self.ser.readline()
             state = self._parse_state(self.ser.readline())
-            print(state)
+            if verbose:
+                print(state)
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
-        controller.move(30)  # Move the goniometer by 30 degrees
+        controller.move(-30)  # Move the goniometer by 30 degrees
 
