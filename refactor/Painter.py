@@ -1,4 +1,5 @@
 import socket
+import pickle
 import time
 from Laser import LaserController
 import Mcp
@@ -246,6 +247,28 @@ class LaserPainter:
                 self.scan_calibration((x,y), 10, (i,j))
                 time.sleep(2)
 
+    def save_calibration_data(self, filename="data/calibration_data.pkl"):
+        """
+        Saves the calibration grid and fine grid to a file.
+
+        Args:
+            filename (str): The name of the file to save the data.
+        """
+        with open(filename, "wb") as file:
+            pickle.dump({'calibration_grid': self.calibration_grid, 'fine_grid': self.fine_grid}, file)
+
+    def load_calibration_data(self, filename="data/calibration_data.pkl"):
+        """
+        Loads the calibration grid and fine grid from a file.
+
+        Args:
+            filename (str): The name of the file to load the data from.
+        """
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
+            self.calibration_grid = data['calibration_grid']
+            self.fine_grid = data['fine_grid']
+
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
     host_y = "192.168.1.10"  # Server's IP address
@@ -273,8 +296,23 @@ if __name__ == '__main__':
     # painter.scan_grid()
     # painter.run_calibration_test()
     # painter.paint_pattern_1()
-    painter.fill_grid()
-    time.sleep(5)
+    # painter.fill_grid()
+    # time.sleep(5)
+    # painter.fine_tune_calibration()
+    # painter.run_calibration_test(fine_tune=True)
+
+
+    curses.wrapper(painter.paint_manually)
+    painter.interpolate_calibration_grid(verbose=True)
+
+    # Save calibration data
+    painter.save_calibration_data()
+
+    # Load calibration data (can be done later or in a different run)
+    # painter.load_calibration_data()
+
+    # Continue with other operations
+    time.sleep(3)
     painter.fine_tune_calibration()
     painter.run_calibration_test(fine_tune=True)
 
