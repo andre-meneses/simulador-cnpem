@@ -61,22 +61,7 @@ class LaserPainter:
         command = f"MWV:{position}\r\n".encode('utf-8')
         (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
 
-    def fill_grid(self):    
-        for i in range(3):
-            self.calibration_grid[i,0,0] = 5.85
-        for i in range(3):
-            self.calibration_grid[i,1,0] = 0.675
-        for i in range(3):
-            self.calibration_grid[i,2,0] = -4.65
-
-        for i in range(3):
-            self.calibration_grid[0,i,1] = -5.10
-        for i in range(3):
-            self.calibration_grid[1,i,1] = -2.25
-        for i in range(3):
-            self.calibration_grid[2,i,1] = 0.6
-
-    def paint_manually(self, stdscr):
+     def paint_manually(self, stdscr):
         """
         Allows manual painting using keyboard controls in a curses window.
 
@@ -295,8 +280,6 @@ if __name__ == '__main__':
     # time.sleep(10)
     # painter.scan_grid()
     # painter.run_calibration_test()
-    # painter.paint_pattern_1()
-    # painter.fill_grid()
     # time.sleep(5)
     # painter.fine_tune_calibration()
     # painter.run_calibration_test(fine_tune=True)
