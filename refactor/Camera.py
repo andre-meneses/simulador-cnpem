@@ -44,5 +44,5 @@ if __name__ == '__main__':
     # Creating camera instances and taking pictures
     for camera_number in cameras:
         cam = Camera(camera_number)
-        cam.take_picture(f'captured_image_{camera_number}.jpg')
+        cam.take_picture(f'images/test/captured_image_{camera_number}.jpg')
 
