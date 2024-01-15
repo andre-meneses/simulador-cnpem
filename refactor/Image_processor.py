@@ -19,7 +19,7 @@ class ImageProcessor:
 # Example Usage
 if __name__ == "__main__":
     # Load an image
-    image = cv2.imread("path_to_your_image.jpg")
+    image = cv2.imread("images/test/captured_image_2.jpg")
 
     if image is not None:
         image_processor = ImageProcessor(image)

@@ -18,7 +18,7 @@ class Camera:
 
             if output_name:
                 cv2.imwrite(output_name, frame)
-                print(f"Image saved as {output_name}")
+                # print(f"Image saved as {output_name}")
 
             if return_image:
                 return frame
