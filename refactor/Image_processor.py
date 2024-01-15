@@ -1,4 +1,5 @@
 import cv2 as cv
+import outils
 import numpy as np
 
 class ImageProcessor:
@@ -15,7 +16,7 @@ class ImageProcessor:
         average_green_value = np.mean(self.image[:, :, 1])
         return average_green_value
 
-    def Centroids(self, save_path="marked_image.jpg"):
+    def centroids(self, save_path="marked_image.jpg"):
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
             return None
@@ -55,9 +56,9 @@ if __name__ == "__main__":
         # if avg_green_value is not None:
             # print(f"Average green value: {avg_green_value}")
 
-        centroids = image_processor.Centroids("images/centroids/marked_centroids.jpg")
+        centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
         if centroids:
-            print("Centroids:", centroids)
+            print("centroids:", outils.sort_centroids(centroids))
     else:
         print("Error: Image could not be loaded.")
 
