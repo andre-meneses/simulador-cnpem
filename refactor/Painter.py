@@ -4,6 +4,8 @@ from Laser import LaserController
 import Mcp
 import curses
 import numpy as np
+from Camera import Camera
+from Image_processor import ImageProcessor
 
 class LaserPainter:
     """
@@ -45,6 +47,8 @@ class LaserPainter:
         self.x_socket.sendall(b'UPMODE:NORMAL\r\n')
         self.y_socket.sendall(b'UPMODE:NORMAL\r\n')
 
+        self.fine_grid = np.zeros((3,3,2)) 
+
     def move(self, axis, position):
         """
         Moves the laser painter along the specified axis to the given position.
@@ -55,25 +59,6 @@ class LaserPainter:
         """
         command = f"MWV:{position}\r\n".encode('utf-8')
         (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
-
-    def paint_pattern_1(self):
-        """
-        Executes a predefined painting pattern 1.
-        """
-        grid_size = 60
-        points = 15
-        increment = 4
-
-        for i in range(points):
-            posY = (-(grid_size / 2) + i * increment) * self.y_calibration_factor
-            self.move('y', posY)
-            
-            for j in range(points):
-                posX = (-(grid_size / 2) + j * increment) * self.x_calibration_factor
-                self.move('x', posX)
-                self.laser_controller.switch_laser('on')
-                time.sleep(self.laser_pulse_duration)
-                self.laser_controller.switch_laser('off')
 
     def fill_grid(self):    
         for i in range(3):
@@ -89,23 +74,6 @@ class LaserPainter:
             self.calibration_grid[1,i,1] = -2.25
         for i in range(3):
             self.calibration_grid[2,i,1] = 0.6
-
-
-    def paint_pattern_2(self):
-        """
-        Executes a predefined painting pattern 2.
-        """
-        posY = -9
-        self.laser_controller.switch_laser('on')
-        for i in range(125):
-            self.move('y', posY)
-            posX = 10
-            for j in range(175):
-                self.move('x', posX)
-                posX -= 0.08
-                time.sleep(0.001)
-            posY += 0.08
-        self.laser_controller.switch_laser('off')
 
     def paint_manually(self, stdscr):
         """
@@ -179,15 +147,20 @@ class LaserPainter:
             for i in range(3):
                 print(" ".join(str(self.calibration_grid[i, j, 1]) for j in range(3)))
 
-    def run_calibration_test(self):
+    def run_calibration_test(self, fine_tune=False):
         """
         Tests the calibration by moving the laser to each point in the calibration grid.
         """
+        if fine_tune:
+            calibration_grid = self.fine_grid
+        else:
+            calibration_grid = self.calibration_grid
+
         for i in range(3):
             for j in range(3):
                 self.laser_controller.switch_laser('on')
-                self.move('x', self.calibration_grid[i, j, 0])
-                self.move('y', self.calibration_grid[i, j, 1])
+                self.move('x', calibration_grid[i, j, 0])
+                self.move('y', calibration_grid[i, j, 1])
                 time.sleep(3)
         self.laser_controller.switch_laser('off')
 
@@ -223,6 +196,56 @@ class LaserPainter:
                 self.scan_area((x,y), 100)
                 time.sleep(2)
 
+    def scan_calibration(self, center, n_points, coordinate, verbose=True):
+        x_top_left = center[0] - 5 * self.x_calibration_factor
+        y_top_left = center[1] - 5 * self.y_calibration_factor
+
+        greenest_value = -10
+        greenest_position = (0,0)
+
+        camera = Camera(2) 
+
+        self.laser_controller.switch_laser('on')
+
+        # Calculate the step size for x and y movements
+        x_step = 10 * self.x_calibration_factor / n_points
+        y_step = 10 * self.y_calibration_factor / n_points
+
+        y = y_top_left
+        while y < y_top_left + 10 * self.y_calibration_factor:
+            self.move('y', y)
+            x = x_top_left
+            while x < x_top_left + 10 * self.x_calibration_factor:
+                self.move('x', x)
+
+                processor = ImageProcessor(camera.take_picture(return_image=True))
+                green = processor.avg_green()
+
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
+                x += x_step
+            y += y_step
+
+        self.laser_controller.switch_laser('off')
+
+        if verbose:
+            print(f"Greenest value:{greenest_value}")
+            print(f"Greenest position:{greenest_position}")
+
+        self.fine_grid[*coordinate, 0] = greenest_position[0]
+        self.fine_grid[*coordinate, 1] = greenest_position[1]
+
+
+    def fine_tune_calibration(self):
+        for i in range(3):
+            for j in range(3):
+                x = self.calibration_grid[i,j,0]
+                y = self.calibration_grid[i,j,1]
+                self.scan_calibration((x,y), 10, (i,j))
+                time.sleep(2)
+
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
     host_y = "192.168.1.10"  # Server's IP address
@@ -251,6 +274,7 @@ if __name__ == '__main__':
     # painter.run_calibration_test()
     # painter.paint_pattern_1()
     painter.fill_grid()
-    time.sleep(10)
-    painter.scan_grid()
+    time.sleep(5)
+    painter.fine_tune_calibration()
+    painter.run_calibration_test(fine_tune=True)
 
