@@ -75,6 +75,22 @@ class LaserPainter:
                 time.sleep(self.laser_pulse_duration)
                 self.laser_controller.switch_laser('off')
 
+    def fill_grid(self):    
+        for i in range(3):
+            self.calibration_grid[i,0,0] = 5.85
+        for i in range(3):
+            self.calibration_grid[i,1,0] = 0.675
+        for i in range(3):
+            self.calibration_grid[i,2,0] = -4.65
+
+        for i in range(3):
+            self.calibration_grid[0,i,1] = -5.10
+        for i in range(3):
+            self.calibration_grid[1,i,1] = -2.25
+        for i in range(3):
+            self.calibration_grid[2,i,1] = 0.6
+
+
     def paint_pattern_2(self):
         """
         Executes a predefined painting pattern 2.
@@ -175,6 +191,38 @@ class LaserPainter:
                 time.sleep(3)
         self.laser_controller.switch_laser('off')
 
+    def scan_area(self, center, n_points):
+        x_top_left = center[0] - 5 * self.x_calibration_factor
+        y_top_left = center[1] - 5 * self.y_calibration_factor
+
+        self.move('x', x_top_left)
+        self.move('y', y_top_left)
+
+        self.laser_controller.switch_laser('on')
+
+        # Calculate the step size for x and y movements
+        x_step = 10 * self.x_calibration_factor / n_points
+        y_step = 10 * self.y_calibration_factor / n_points
+
+        y = y_top_left
+        while y < y_top_left + 10 * self.y_calibration_factor:
+            self.move('y', y)
+            x = x_top_left
+            while x < x_top_left + 10 * self.x_calibration_factor:
+                self.move('x', x)
+                x += x_step
+            y += y_step
+
+        self.laser_controller.switch_laser('off')
+
+    def scan_grid(self):
+        for i in range(3):
+            for j in range(3):
+                x = self.calibration_grid[i,j,0]
+                y = self.calibration_grid[i,j,1]
+                self.scan_area((x,y), 100)
+                time.sleep(2)
+
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
     host_y = "192.168.1.10"  # Server's IP address
@@ -196,7 +244,13 @@ if __name__ == '__main__':
     
     painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
 
-    curses.wrapper(painter.paint_manually)
-    painter.interpolate_calibration_grid(verbose=True)
-    painter.run_calibration_test()
+    # curses.wrapper(painter.paint_manually)
+    # painter.interpolate_calibration_grid(verbose=True)
+    # time.sleep(10)
+    # painter.scan_grid()
+    # painter.run_calibration_test()
+    # painter.paint_pattern_1()
+    painter.fill_grid()
+    time.sleep(10)
+    painter.scan_grid()
 
