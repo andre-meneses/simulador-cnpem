@@ -1,4 +1,5 @@
 import socket
+import outils
 import pickle
 import time
 from Laser import LaserController
@@ -44,11 +45,13 @@ class LaserPainter:
         self.laser_pulse_duration = laser_pulse_duration
         self.laser_controller = LaserController(mcp_controller)
         self.calibration_grid = np.zeros((3, 3, 2))
+        self.fine_grid = np.zeros((3,3,2)) 
+        self.centroids = np.zeros((3,3,2))
 
         self.x_socket.sendall(b'UPMODE:NORMAL\r\n')
         self.y_socket.sendall(b'UPMODE:NORMAL\r\n')
 
-        self.fine_grid = np.zeros((3,3,2)) 
+
 
     def move(self, axis, position):
         """
@@ -61,7 +64,7 @@ class LaserPainter:
         command = f"MWV:{position}\r\n".encode('utf-8')
         (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
 
-     def paint_manually(self, stdscr):
+    def paint_manually(self, stdscr):
         """
         Allows manual painting using keyboard controls in a curses window.
 
@@ -254,6 +257,14 @@ class LaserPainter:
             self.calibration_grid = data['calibration_grid']
             self.fine_grid = data['fine_grid']
 
+    def compute_centroids(self):
+        camera = Camera(2) 
+        image = camera.take_picture(return_image=True)
+        image_processor = ImageProcessor(image)
+        centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
+        self.centroids = outils.sort_centroids(centroids)
+        print(self.centroids)
+
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
     host_y = "192.168.1.10"  # Server's IP address
@@ -285,17 +296,19 @@ if __name__ == '__main__':
     # painter.run_calibration_test(fine_tune=True)
 
 
-    curses.wrapper(painter.paint_manually)
-    painter.interpolate_calibration_grid(verbose=True)
-
-    # Save calibration data
-    painter.save_calibration_data()
+    # curses.wrapper(painter.paint_manually)
+    # painter.interpolate_calibration_grid(verbose=True)
 
     # Load calibration data (can be done later or in a different run)
-    # painter.load_calibration_data()
+    painter.load_calibration_data()
 
-    # Continue with other operations
-    time.sleep(3)
-    painter.fine_tune_calibration()
-    painter.run_calibration_test(fine_tune=True)
+    # time.sleep(3)
+    # painter.fine_tune_calibration()
+    # painter.run_calibration_test(fine_tune=True)
+
+    # Save calibration data
+    # painter.save_calibration_data()
+
+    # painter.compute_centroids()
+    print(painter.fine_grid)
 
