@@ -4,25 +4,30 @@ class Camera:
     def __init__(self, camera_number):
         self.camera_number = camera_number
 
-    def take_picture(self, output_name):
+    def take_picture(self, output_name=None, return_image=False):
         cap = cv2.VideoCapture(self.camera_number)
         if not cap.isOpened():
             print(f"Error: Camera with index {self.camera_number} could not be opened.")
-            return False
+            return None if return_image else False
 
         try:
             ret, frame = cap.read()
             if not ret:
                 print("Error: No frame captured from the camera.")
-                return False
+                return None if return_image else False
 
-            cv2.imwrite(output_name, frame)
-            print(f"Image saved as {output_name}")
+            if output_name:
+                cv2.imwrite(output_name, frame)
+                print(f"Image saved as {output_name}")
+
+            if return_image:
+                return frame
+
             return True
 
         except Exception as e:
             print(f"An error occurred: {e}")
-            return False
+            return None if return_image else False
 
         finally:
             cap.release()
