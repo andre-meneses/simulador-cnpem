@@ -42,6 +42,9 @@ class LaserPainter:
         self.laser_controller = LaserController(mcp_controller)
         self.calibration_grid = np.zeros((3, 3, 2))
 
+        self.x_socket.sendall(b'UPMODE:NORMAL\r\n')
+        self.y_socket.sendall(b'UPMODE:NORMAL\r\n')
+
     def move(self, axis, position):
         """
         Moves the laser painter along the specified axis to the given position.
@@ -117,19 +120,19 @@ class LaserPainter:
             elif key == curses.KEY_DOWN:
                 posY += movement
             elif key == curses.KEY_LEFT:
-                posX -= movement
-            elif key == curses.KEY_RIGHT:
                 posX += movement
+            elif key == curses.KEY_RIGHT:
+                posX -= movement
             elif key == ord('a'):
                 # Assigning posX and posY to the left column of the grid
                 for row in range(3):
                     self.calibration_grid[row, 0, 0] = posX
-                    self.calibration_grid[row, 0, 1] = posY
+                    self.calibration_grid[0, row, 1] = posY
             elif key == ord('c'):
                 # Assigning posX and posY to the right column of the grid
                 for row in range(3):
                     self.calibration_grid[row, 2, 0] = posX
-                    self.calibration_grid[row, 2, 1] = posY
+                    self.calibration_grid[2, row, 1] = posY
             elif key == ord('q'):
                 break
 
@@ -191,9 +194,9 @@ if __name__ == '__main__':
     calx = 20 / (113.41 + 114.21)
     caly = 20 / (153.02 + 154.22)
     
-    painter = Painter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
+    painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
 
-    # curses.wrapper(painter.paint_manually)
-    # painter.interpolate_calibration_grid()
-    # painter.run_calibration_test()
+    curses.wrapper(painter.paint_manually)
+    painter.interpolate_calibration_grid(verbose=True)
+    painter.run_calibration_test()
 
