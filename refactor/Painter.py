@@ -195,16 +195,15 @@ class LaserPainter:
                 self.scan_area((x,y), 100)
                 time.sleep(2)
 
-    def scan_calibration(self, center, n_points, coordinate, verbose=True):
+    def diag_scan(self, center, n_points, coordinate, verbose=True):
+
         x_top_left = center[0] - 5 * self.x_calibration_factor
         y_top_left = center[1] - 5 * self.y_calibration_factor
 
-        max_brght = -10
-        max_pos = (0,0)
+        greenest_value = -10
+        greenest_position = (0,0)
 
-        camera = Camera(2) 
-
-        centroids = self.centroids
+        camera = Camera(2)
 
         self.laser_controller.switch_laser('on')
 
@@ -213,40 +212,133 @@ class LaserPainter:
         y_step = 10 * self.y_calibration_factor / n_points
 
         y = y_top_left
-        i,j = coordinate[0], coordinate[1]
+        x = x_top_left
 
-        print()
+        while y < y_top_left + 10 * self.y_calibration_factor and x < x_top_left + 10 * self.x_calibration_factor:
+            self.move('y', y)
+            self.move('x', x)
 
+            processor = ImageProcessor(camera.take_picture(return_image=True))
+            green = processor.avg_green()
+
+            if green > greenest_value:
+                greenest_value = green
+                greenest_position = (x,y)
+                camera.take_picture(f"images/calibration/green_diag_{coordinate}.jpg")
+
+            y += y_step
+            x += x_step
+
+        self.laser_controller.switch_laser('off')
+
+        if verbose:
+            print(f"Greenest value:{greenest_value}")
+            print(f"Greenest position:{greenest_position}")
+
+        return greenest_position
+
+    def scan_calibration(self, center, n_points, coordinate, verbose=True):
+        x_top_left = center[0] - 5 * self.x_calibration_factor
+        y_top_left = center[1] - 5 * self.y_calibration_factor
+
+        greenest_value = -10
+        greenest_position = (0,0)
+
+        camera = Camera(2)
+
+        self.laser_controller.switch_laser('on')
+
+        # Calculate the step size for x and y movements
+        x_step = 10 * self.x_calibration_factor / n_points
+        y_step = 10 * self.y_calibration_factor / n_points
+
+        y = y_top_left
         while y < y_top_left + 10 * self.y_calibration_factor:
             self.move('y', y)
             x = x_top_left
-
-            # brightness = []
-
             while x < x_top_left + 10 * self.x_calibration_factor:
                 self.move('x', x)
 
                 processor = ImageProcessor(camera.take_picture(return_image=True))
+                green = processor.avg_green()
 
-                # brght = processor.compute_brightness(self.contours[3*i + j])
-                brght = processor.avg_green()
-
-                if brght > max_brght:
-                    max_brgth = brght
-                    max_pos = (x,y)
-
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
                 x += x_step
-
-            if verbose:
-                print(f"brgth: {max_brgth}, pos: {max_pos}")
-
             y += y_step
 
-
-        self.fine_grid[i,j,0] = max_pos[0]
-        self.fine_grid[i,j,1] = max_pos[1]
-
         self.laser_controller.switch_laser('off')
+
+        if verbose:
+            print(f"Greenest value:{greenest_value}")
+            print(f"Greenest position:{greenest_position}")
+
+        self.fine_grid[*coordinate, 0] = greenest_position[0]
+        self.fine_grid[*coordinate, 1] = greenest_position[1]
+
+
+    def fine_tune_calibration(self):
+        for i in range(3):
+            for j in range(3):
+                x = self.calibration_grid[i,j,0]
+                y = self.calibration_grid[i,j,1]
+                self.scan_calibration((x,y), 10, (i,j))
+                time.sleep(2)
+
+    # def scan_calibration(self, center, n_points, coordinate, verbose=True):
+    #     x_top_left = center[0] - 5 * self.x_calibration_factor
+    #     y_top_left = center[1] - 5 * self.y_calibration_factor
+
+    #     max_brght = -10
+    #     max_pos = (0,0)
+
+    #     camera = Camera(2) 
+
+    #     centroids = self.centroids
+
+    #     self.laser_controller.switch_laser('on')
+
+    #     # Calculate the step size for x and y movements
+    #     x_step = 10 * self.x_calibration_factor / n_points
+    #     y_step = 10 * self.y_calibration_factor / n_points
+
+    #     y = y_top_left
+    #     i,j = coordinate[0], coordinate[1]
+
+    #     print()
+
+    #     while y < y_top_left + 10 * self.y_calibration_factor:
+    #         self.move('y', y)
+    #         x = x_top_left
+
+    #         # brightness = []
+
+    #         while x < x_top_left + 10 * self.x_calibration_factor:
+    #             self.move('x', x)
+
+    #             processor = ImageProcessor(camera.take_picture(return_image=True))
+
+    #             # brght = processor.compute_brightness(self.contours[3*i + j])
+    #             brght = processor.avg_green()
+
+    #             if brght > max_brght:
+    #                 max_brgth = brght
+    #                 max_pos = (x,y)
+
+    #             x += x_step
+
+    #         if verbose:
+    #             print(f"brgth: {max_brgth}, pos: {max_pos}")
+
+    #         y += y_step
+
+
+    #     self.fine_grid[i,j,0] = max_pos[0]
+    #     self.fine_grid[i,j,1] = max_pos[1]
+
+    #     self.laser_controller.switch_laser('off')
         # return brightness
 
     # def fine_tune_calibration(self):
@@ -258,56 +350,56 @@ class LaserPainter:
     #             time.sleep(2)
 
 
-    def create_heatmap(self, points):
-       # Convert points to numpy array for easier manipulation
-        points_array = np.array(points)
+    # def create_heatmap(self, points):
+    #    # Convert points to numpy array for easier manipulation
+    #     points_array = np.array(points)
 
-        # Separate x, y, and values
-        x_coords = points_array[:, 0]
-        y_coords = points_array[:, 1]
-        values = points_array[:, 2]
+    #     # Separate x, y, and values
+    #     x_coords = points_array[:, 0]
+    #     y_coords = points_array[:, 1]
+    #     values = points_array[:, 2]
 
-        # Create the KDE plot
-        plt.figure(figsize=(8, 6))
-        sns.kdeplot(x=x_coords, y=y_coords, weights=values, cmap="Greens", fill=True)
-        plt.colorbar(label='Density')
-        plt.title('Heatmap in Green Scale with Seaborn')
-        plt.xlabel('X')
-        plt.ylabel('Y')
+    #     # Create the KDE plot
+    #     plt.figure(figsize=(8, 6))
+    #     sns.kdeplot(x=x_coords, y=y_coords, weights=values, cmap="Greens", fill=True)
+    #     plt.colorbar(label='Density')
+    #     plt.title('Heatmap in Green Scale with Seaborn')
+    #     plt.xlabel('X')
+    #     plt.ylabel('Y')
 
-        plt.show() 
+    #     plt.show() 
 
-    def find_max_z(self,points):
+    # def find_max_z(self,points):
 
-        # Step 1: Find the maximum value of z
-        max_z = max(point[2] for point in points)
+    #     # Step 1: Find the maximum value of z
+    #     max_z = max(point[2] for point in points)
 
-        # Step 2: Filter points with the maximum z value
-        max_z_points = [point for point in points if point[2] == max_z]
+    #     # Step 2: Filter points with the maximum z value
+    #     max_z_points = [point for point in points if point[2] == max_z]
 
-        # Step 3: Calculate the center of the region
-        if len(max_z_points) > 1:
-            avg_x = sum(point[0] for point in max_z_points) / len(max_z_points)
-            avg_y = sum(point[1] for point in max_z_points) / len(max_z_points)
-            return (avg_x, avg_y)
-        else:
-            # If there's only one point, return its (x, y) coordinates
-            return max_z_points[0][:2]
+    #     # Step 3: Calculate the center of the region
+    #     if len(max_z_points) > 1:
+    #         avg_x = sum(point[0] for point in max_z_points) / len(max_z_points)
+    #         avg_y = sum(point[1] for point in max_z_points) / len(max_z_points)
+    #         return (avg_x, avg_y)
+    #     else:
+    #         # If there's only one point, return its (x, y) coordinates
+    #         return max_z_points[0][:2]
 
-    def fine_tune_calibration(self):
-        for i, j in itertools.product(range(3), repeat=2):
-            coordinates = self.calibration_grid[i, j, :2]
-            # brightness = self.scan_calibration(coordinates, 10, (i, j))
-            self.scan_calibration(coordinates, 10, (i, j))
-            # x_max, y_max = self.find_max_z(brightness)
+    # def fine_tune_calibration(self):
+    #     for i, j in itertools.product(range(3), repeat=2):
+    #         coordinates = self.calibration_grid[i, j, :2]
+    #         # brightness = self.scan_calibration(coordinates, 10, (i, j))
+    #         self.scan_calibration(coordinates, 10, (i, j))
+    #         # x_max, y_max = self.find_max_z(brightness)
 
-            # self.fine_grid[i,j,0] = x_max
-            # self.fine_grid[i,j,1] = y_max
+    #         # self.fine_grid[i,j,0] = x_max
+    #         # self.fine_grid[i,j,1] = y_max
 
-            # print(f"x:{x_max}, y:{y_max}")
-            # self.create_heatmap(brightness)
+    #         # print(f"x:{x_max}, y:{y_max}")
+    #         # self.create_heatmap(brightness)
 
-            time.sleep(2)
+    #         time.sleep(2)
 
 
     def save_calibration_data(self, filename="data/calibration_data.pkl"):
@@ -369,7 +461,6 @@ if __name__ == '__main__':
     # painter.fine_tune_calibration()
     # painter.run_calibration_test(fine_tune=True)
 
-
     # curses.wrapper(painter.paint_manually)
     # painter.interpolate_calibration_grid(verbose=True)
 
@@ -379,10 +470,10 @@ if __name__ == '__main__':
     painter.load_calibration_data()
 
     # time.sleep(3)
-    painter.fine_tune_calibration()
+    # painter.fine_tune_calibration()
     painter.run_calibration_test(fine_tune=True)
 
     # Save calibration data
-    painter.save_calibration_data()
+    # painter.save_calibration_data()
 
 
