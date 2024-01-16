@@ -16,6 +16,47 @@ class ImageProcessor:
         average_green_value = np.mean(self.image[:, :, 1])
         return average_green_value
 
+    def find_color(self, pixel, color=1):
+        if self.image is None:
+            print("Error: Image not provided or loaded properly.")
+            return None
+
+        pixel = (pixel[1], pixel[0])
+
+        return self.image[*pixel, color]
+
+    def compute_whole_brightness(self):
+        gray_cropped = cv.cvtColor(self.image, cv.COLOR_BGR2GRAY)
+        return gray_cropped.mean()
+
+    def compute_brightness(self, contour, enlarge_percent=20):
+
+        if self.image is None:
+            print("Error: Image not provided or loaded properly.")
+            return None
+
+        total_brightness = 0
+
+        x, y, w, h = cv.boundingRect(contour)
+
+        # Enlarge the rectangle by the specified percentage
+        enlarge_size = max(w, h) * enlarge_percent / 100
+        x = int(x - enlarge_size / 2)
+        y = int(y - enlarge_size / 2)
+        w = int(w + enlarge_size)
+        h = int(h + enlarge_size)
+
+        # Ensure the rectangle is within image boundaries
+        x, y = max(0, x), max(0, y)
+        w, h = min(w, self.image.shape[1] - x), min(h, self.image.shape[0] - y)
+
+        # Crop and calculate brightness
+        cropped_image = self.image[y:y+h, x:x+w]
+        gray_cropped = cv.cvtColor(cropped_image, cv.COLOR_BGR2GRAY)
+        total_brightness = gray_cropped.mean()
+
+        return total_brightness
+    
     def centroids(self, save_path="marked_image.jpg"):
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
@@ -35,10 +76,10 @@ class ImageProcessor:
             if M['m00'] != 0:
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
-                centroids.append((cx, cy))
+                centroids.append([cx, cy, contour])
                 cv.drawContours(self.image, [contour], -1, (0, 255, 0), 2)
                 cv.circle(self.image, (cx, cy), 4, (0, 0, 255), -1)
-                print(f"x: {cx} y: {cy}")
+                # print(f"x: {cx} y: {cy}")
 
         # Save the modified image with centroids and contours marked
         cv.imwrite(save_path, self.image)

@@ -7,7 +7,11 @@ def sort_centroids(centroids):
     # Sort each batch of three centroids by x-coordinate
     sorted_batches = [sorted(sorted_by_y[i:i + 3], key=lambda k: k[0]) for i in range(0, len(sorted_by_y), 3)]
 
+    sorted_batches_centroids = [(sorted_batches[i][j][0],sorted_batches[i][j][1]) for i in range(len(sorted_batches)) for j in range(3)]
+
+    sorted_batches_contours = [(sorted_batches[i][j][2]) for i in range(len(sorted_batches)) for j in range(3)]
+
     # Flatten and reshape into a 3x3x2 array
-    return np.array([c for batch in sorted_batches for c in batch]).reshape(3, 3, 2)
+    return np.array([c for batch in sorted_batches_centroids for c in batch]).reshape(3, 3, 2), sorted_batches_contours
 
 
