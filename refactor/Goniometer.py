@@ -115,7 +115,7 @@ class GoniometerController:
 if __name__ == '__main__':
     with GoniometerController() as controller:
         # controller.ser.write(b'ST\r\n')
-        controller.move(180)  
+        controller.move(-90)  
         # curses.wrapper(controller.move_manually)
         # controller.calibrate_coordinates()
 
