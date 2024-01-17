@@ -1,4 +1,9 @@
 import serial
+import numpy as np
+import curses
+from Camera import Camera
+from Image_processor import ImageProcessor
+from teste import find_contour
 
 class GoniometerController:
     def __init__(self, port='/dev/ttyUSB0', baud_rate=115200):
@@ -22,7 +27,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=40000, acc=20000, dec=20000, verbose=False):
+    def move(self, angle, speed=30000, acc=15000, dec=15000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -48,7 +53,69 @@ class GoniometerController:
             if verbose:
                 print(state)
 
+
+    def move_manually(self,stdscr):
+        curses.noecho()
+        curses.cbreak()
+        stdscr.keypad(True)
+
+        while True:
+            stdscr.clear()
+            stdscr.refresh()
+
+            key = stdscr.getch()
+            movement = 0.15
+
+            if key == curses.KEY_LEFT:
+                self.move(-1)
+            elif key == curses.KEY_RIGHT:
+                self.move(1)
+            elif key == ord('q'):
+                break
+
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
+
+    def calibrate_coordinates(self):
+        angle = 0
+
+        angle_areas = []
+
+        for i in range(50):
+            area = find_contour(i)
+            angle_areas.append([angle,area])
+            self.move(0.1)
+            print(i)
+            angle += 0.1
+
+        self.move(-5)
+
+        angle = 0
+
+        for i in range(50):
+            area = find_contour(i*-1)
+            angle_areas.append([angle,area])
+            self.move(-0.1)
+            print(i*-1)
+            angle -= 0.1
+
+        angle_areas = np.array(angle_areas)
+        max_index = np.argmax(angle_areas[:,1])
+        mpoint = angle_areas[max_index]
+
+        self.move(5)
+        # print(angle_areas)
+        # print(mpoint)
+
+        print(f"Max area:{mpoint[1]}, angle:{mpoint[0]}")
+        self.move(mpoint[0])
+
 if __name__ == '__main__':
     with GoniometerController() as controller:
-        controller.move(-30)  # Move the goniometer by 30 degrees
+        # controller.ser.write(b'ST\r\n')
+        controller.move(180)  
+        # curses.wrapper(controller.move_manually)
+        # controller.calibrate_coordinates()
 

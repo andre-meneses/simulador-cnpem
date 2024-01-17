@@ -195,13 +195,61 @@ class LaserPainter:
                 self.scan_area((x,y), 100)
                 time.sleep(2)
 
-    def diag_scan(self, center, n_points, coordinate, verbose=True):
+    def scan_diagonal(self, center, n_points, coordinate, verbose=True):
 
-        x_top_left = center[0] - 5 * self.x_calibration_factor
-        y_top_left = center[1] - 5 * self.y_calibration_factor
 
         greenest_value = -10
         greenest_position = (0,0)
+
+        camera = Camera(2)
+
+        indexes = [2,3,4,5,6,7,8]
+
+        for i in indexes:
+            x_top_left = center[0] - i * self.x_calibration_factor
+            y_top_left = center[1] - i * self.y_calibration_factor
+
+            self.laser_controller.switch_laser('on')
+
+            # Calculate the step size for x and y movements
+            x_step = 10 * self.x_calibration_factor / n_points
+            y_step = 10 * self.y_calibration_factor / n_points
+
+            y = y_top_left
+            x = x_top_left
+
+            while y < y_top_left + 10 * self.y_calibration_factor and x < x_top_left + 10 * self.x_calibration_factor:
+                self.move('y', y)
+                self.move('x', x)
+
+                processor = ImageProcessor(camera.take_picture(return_image=True))
+                green = processor.avg_green()
+
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    camera.take_picture(f"images/calibration/green_diag_{coordinate}.jpg")
+
+                y += y_step
+                x += x_step
+
+            self.laser_controller.switch_laser('off')
+
+            if verbose:
+                print(f"Greenest value:{greenest_value}")
+                print(f"Greenest position:{greenest_position}")
+
+            self.fine_grid[*coordinate, 0] = greenest_position[0]
+            self.fine_grid[*coordinate, 1] = greenest_position[1]
+
+        return greenest_position, greenest_value
+
+    def scan_horizontal(self, center, n_points, coordinate, gv, gp, verbose=True):
+        x_top_left = center[0] - 5 * self.x_calibration_factor
+        y_top_left = center[1] 
+
+        greenest_value = gv
+        greenest_position = gp
 
         camera = Camera(2)
 
@@ -214,8 +262,9 @@ class LaserPainter:
         y = y_top_left
         x = x_top_left
 
-        while y < y_top_left + 10 * self.y_calibration_factor and x < x_top_left + 10 * self.x_calibration_factor:
-            self.move('y', y)
+        self.move('y', y)
+
+        while x < x_top_left + 10 * self.x_calibration_factor:
             self.move('x', x)
 
             processor = ImageProcessor(camera.take_picture(return_image=True))
@@ -224,50 +273,8 @@ class LaserPainter:
             if green > greenest_value:
                 greenest_value = green
                 greenest_position = (x,y)
-                camera.take_picture(f"images/calibration/green_diag_{coordinate}.jpg")
-
-            y += y_step
+                camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
             x += x_step
-
-        self.laser_controller.switch_laser('off')
-
-        if verbose:
-            print(f"Greenest value:{greenest_value}")
-            print(f"Greenest position:{greenest_position}")
-
-        return greenest_position
-
-    def scan_calibration(self, center, n_points, coordinate, verbose=True):
-        x_top_left = center[0] - 5 * self.x_calibration_factor
-        y_top_left = center[1] - 5 * self.y_calibration_factor
-
-        greenest_value = -10
-        greenest_position = (0,0)
-
-        camera = Camera(2)
-
-        self.laser_controller.switch_laser('on')
-
-        # Calculate the step size for x and y movements
-        x_step = 10 * self.x_calibration_factor / n_points
-        y_step = 10 * self.y_calibration_factor / n_points
-
-        y = y_top_left
-        while y < y_top_left + 10 * self.y_calibration_factor:
-            self.move('y', y)
-            x = x_top_left
-            while x < x_top_left + 10 * self.x_calibration_factor:
-                self.move('x', x)
-
-                processor = ImageProcessor(camera.take_picture(return_image=True))
-                green = processor.avg_green()
-
-                if green > greenest_value:
-                    greenest_value = green
-                    greenest_position = (x,y)
-                    camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
-                x += x_step
-            y += y_step
 
         self.laser_controller.switch_laser('off')
 
@@ -278,13 +285,61 @@ class LaserPainter:
         self.fine_grid[*coordinate, 0] = greenest_position[0]
         self.fine_grid[*coordinate, 1] = greenest_position[1]
 
+        return greenest_position, greenest_value
+
+    def scan_vertical(self, center, n_points, coordinate, gv, gp, verbose=True):
+        x_top_left = center[0]
+        y_top_left = center[1] - 5 * self.y_calibration_factor
+
+        greenest_value = gv
+        greenest_position = gp
+
+        camera = Camera(2)
+
+        self.laser_controller.switch_laser('on')
+
+        # Calculate the step size for x and y movements
+        x_step = 10 * self.x_calibration_factor / n_points
+        y_step = 10 * self.y_calibration_factor / n_points
+
+        y = y_top_left
+        x = x_top_left
+
+        self.move('x', x)
+
+        while y < y_top_left + 10 * self.y_calibration_factor:
+            self.move('y', y)
+
+            processor = ImageProcessor(camera.take_picture(return_image=True))
+            green = processor.avg_green()
+
+            if green > greenest_value:
+                greenest_value = green
+                greenest_position = (x,y)
+                camera.take_picture(f"images/calibration/green_verti_{coordinate}.jpg")
+            y += y_step
+
+        self.laser_controller.switch_laser('off')
+
+        if verbose:
+            print(f"Greenest value:{greenest_value}")
+            print(f"Greenest position:{greenest_position}")
+
+        # self.fine_grid[*coordinate, 0] = greenest_position[0]
+        # self.fine_grid[*coordinate, 1] = greenest_position[1]
+
+        return greenest_position, greenest_value 
 
     def fine_tune_calibration(self):
         for i in range(3):
             for j in range(3):
                 x = self.calibration_grid[i,j,0]
                 y = self.calibration_grid[i,j,1]
-                self.scan_calibration((x,y), 10, (i,j))
+                pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
+                pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
+                pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
+                pos_4, gv4 = self.scan_horizontal((x,pos_3[1]), 10, (i,j), gv3, pos_3)
+                pos_5, gv5 = self.scan_vertical((pos_4[0],y), 10, (i,j), gv4, pos_4)
                 time.sleep(2)
 
     # def scan_calibration(self, center, n_points, coordinate, verbose=True):
@@ -466,14 +521,14 @@ if __name__ == '__main__':
 
     # Load calibration data (can be done later or in a different run)
 
-    # painter.compute_centroids()
     painter.load_calibration_data()
+    painter.compute_centroids()
 
     # time.sleep(3)
-    # painter.fine_tune_calibration()
+    painter.fine_tune_calibration()
     painter.run_calibration_test(fine_tune=True)
 
     # Save calibration data
-    # painter.save_calibration_data()
+    painter.save_calibration_data()
 
 

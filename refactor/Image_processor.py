@@ -6,6 +6,7 @@ class ImageProcessor:
     def __init__(self, image):
         # Assign the image directly
         self.image = image
+        self.white_rectangle = None
 
     def avg_green(self):
         if self.image is None:
@@ -85,6 +86,34 @@ class ImageProcessor:
         cv.imwrite(save_path, self.image)
 
         return centroids
+
+    def find_contour(self):
+        img = self.image[36:471, 110:530]
+
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        blurred = cv2.GaussianBlur(img_gray, (5, 5), 0)
+
+        ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY)
+
+        contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+
+        area = 0
+
+        for contour in contours:
+            area += cv2.contourArea(contour)
+
+        return area
+
+        # draw contours on the original image
+        # image_copy = img.copy()
+        # cv2.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+
+        # see the results
+        # cv2.imshow('None approximation', image_copy)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
 
 # Example Usage
 if __name__ == "__main__":
