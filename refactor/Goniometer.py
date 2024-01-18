@@ -4,6 +4,7 @@ import curses
 from Camera import Camera
 from Image_processor import ImageProcessor
 from teste import find_contour
+import time
 
 class GoniometerController:
     def __init__(self, port='/dev/ttyUSB0', baud_rate=115200):
@@ -27,7 +28,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=30000, acc=15000, dec=15000, verbose=False):
+    def move(self, angle, speed=30000, acc=5000, dec=5000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -78,13 +79,13 @@ class GoniometerController:
         curses.echo()
         curses.endwin()
 
-    def calibrate_coordinates(self):
+    def calibrate_coordinates(self, camera):
         angle = 0
 
         angle_areas = []
 
         for i in range(50):
-            area = find_contour(i)
+            area = find_contour(i, camera)
             angle_areas.append([angle,area])
             self.move(0.1)
             print(i)
@@ -95,7 +96,7 @@ class GoniometerController:
         angle = 0
 
         for i in range(50):
-            area = find_contour(i*-1)
+            area = find_contour(i*-1, camera)
             angle_areas.append([angle,area])
             self.move(-0.1)
             print(i*-1)
@@ -106,16 +107,18 @@ class GoniometerController:
         mpoint = angle_areas[max_index]
 
         self.move(5)
-        # print(angle_areas)
-        # print(mpoint)
 
         print(f"Max area:{mpoint[1]}, angle:{mpoint[0]}")
         self.move(mpoint[0])
+        return mpoint[0]
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
         # controller.ser.write(b'ST\r\n')
-        controller.move(-90)  
-        # curses.wrapper(controller.move_manually)
-        # controller.calibrate_coordinates()
+        # controller.move(-90)
+        # angle1 = controller.calibrate_coordinates(0)
+        # time.sleep(30)
+        controller.move(90)
+        angle2 = controller.calibrate_coordinates(2)
+        print(90 + angle2)
 
