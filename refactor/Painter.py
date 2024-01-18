@@ -529,6 +529,6 @@ if __name__ == '__main__':
     painter.run_calibration_test(fine_tune=True)
 
     # Save calibration data
-    painter.save_calibration_data()
+    # painter.save_calibration_data()
 
 

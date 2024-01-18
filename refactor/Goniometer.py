@@ -118,7 +118,10 @@ if __name__ == '__main__':
         # controller.move(-90)
         # angle1 = controller.calibrate_coordinates(0)
         # time.sleep(30)
-        controller.move(90)
-        angle2 = controller.calibrate_coordinates(2)
-        print(90 + angle2)
+        # controller.move(90)
+        # angle2 = controller.calibrate_coordinates(2)
+        # print(90 + angle2)
+         
+        # Ângulo entre camêras: 89° 
+        controller.move(-89)
 
