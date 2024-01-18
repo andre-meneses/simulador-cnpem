@@ -28,15 +28,22 @@ class ImageProcessor:
 
     def compute_whole_brightness(self):
         gray_cropped = cv.cvtColor(self.image, cv.COLOR_BGR2GRAY)
-        return gray_cropped.mean()
 
-    def compute_brightness(self, contour, enlarge_percent=20):
+    def show_wait_destroy(self,winname, img):
+        cv.imshow(winname, img)
+        cv.moveWindow(winname, 500, 0)
+        cv.waitKey(0)
+        cv.destroyWindow(winname)
+
+    def compute_brightness(self, contour, enlarge_percent=200):
 
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
             return None
 
         total_brightness = 0
+
+        image = self.image
 
         x, y, w, h = cv.boundingRect(contour)
 
@@ -53,8 +60,10 @@ class ImageProcessor:
 
         # Crop and calculate brightness
         cropped_image = self.image[y:y+h, x:x+w]
-        gray_cropped = cv.cvtColor(cropped_image, cv.COLOR_BGR2GRAY)
-        total_brightness = gray_cropped.mean()
+        total_brightness = cropped_image[:,:,1].mean()
+
+        cv.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # self.show_wait_destroy("rect", image)
 
         return total_brightness
     
@@ -119,16 +128,13 @@ class ImageProcessor:
 if __name__ == "__main__":
     image = cv.imread("images/test/captured_image_2.jpg")
 
-    if image is not None:
-        image_processor = ImageProcessor(image)
+    # avg_green_value = image_processor.avg_green()
+    # if avg_green_value is not None:
+        # print(f"Average green value: {avg_green_value}")
 
-        # avg_green_value = image_processor.avg_green()
-        # if avg_green_value is not None:
-            # print(f"Average green value: {avg_green_value}")
-
-        centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
-        if centroids:
-            print("centroids:", outils.sort_centroids(centroids))
-    else:
-        print("Error: Image could not be loaded.")
+    centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
+    if centroids:
+        print("centroids:", outils.sort_centroids(centroids))
+else:
+    print("Error: Image could not be loaded.")
 
