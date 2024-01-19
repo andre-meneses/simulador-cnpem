@@ -52,6 +52,7 @@ class LaserPainter:
         self.calibration_grid = np.zeros((3, 3, 2))
         self.fine_grid = np.zeros((3,3,2)) 
         self.green_map = []
+        self.whole_green_map = []
 
         self.x_socket.sendall(b'UPMODE:NORMAL\r\n')
         self.y_socket.sendall(b'UPMODE:NORMAL\r\n')
@@ -229,14 +230,16 @@ class LaserPainter:
 
                 # self.green_map.append([x,y,gree])
                 
-                if green >= 250:
+                if green >= 254:
                     self.green_map.append([x,y,green])
 
-                # if green > greenest_value:
-                    # greenest_value = green
-                    # greenest_position = (x,y)
-                    # print((x,y))
-                    # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
+                self.whole_green_map.append([x,y,green])
+
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    print((x,y))
+                    camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
 
                 y += y_step
                 x += x_step
@@ -250,7 +253,14 @@ class LaserPainter:
             # self.fine_grid[*coordinate, 0] = greenest_position[0]
             # self.fine_grid[*coordinate, 1] = greenest_position[1]
 
-        return greenest_position, greenest_value
+        if len(self.green_map) != 0:
+            greens = np.array(self.green_map)
+            x_values = np.array([coord[0] for coord in greens])
+            y_values = np.array([coord[1] for coord in greens])
+            return (x_values.mean(), y_values.mean()), greenest_value
+        else:
+            return greenest_position, greenest_value
+
 
     def scan_horizontal(self, center, n_points, coordinate, gv, gp, verbose=True):
         x_top_left = center[0] - 5 * self.x_calibration_factor
@@ -267,27 +277,32 @@ class LaserPainter:
         x_step = 10 * self.x_calibration_factor / n_points
         y_step = 10 * self.y_calibration_factor / n_points
 
-        y = y_top_left
-        x = x_top_left
+        y_values = [center[1] - 2.5*self.y_calibration_factor, center[1], center[1] + 2.5*self.y_calibration_factor]
 
-        self.move('y', y)
 
-        while x < x_top_left + 10 * self.x_calibration_factor:
-            self.move('x', x)
+        for y in y_values:
 
-            processor = ImageProcessor(camera.take_picture(return_image=True))
-            # green = processor.avg_green()
+            self.move('y', y)
+            x = x_top_left
 
-            green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
+            while x < x_top_left + 10 * self.x_calibration_factor:
+                self.move('x', x)
 
-            if green == 255:
-                self.green_map.append([x,y,green])
+                processor = ImageProcessor(camera.take_picture(return_image=True))
+                # green = processor.avg_green()
 
-            if green > greenest_value:
-                greenest_value = green
-                greenest_position = (x,y)
-                # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
-            x += x_step
+                green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
+
+                self.whole_green_map.append([x,y,green])
+
+                if green == 255:
+                    self.green_map.append([x,y,green])
+
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
+                x += x_step
 
         self.laser_controller.switch_laser('off')
 
@@ -312,43 +327,44 @@ class LaserPainter:
         self.laser_controller.switch_laser('on')
 
         # Calculate the step size for x and y movements
-        x_step = 10 * self.x_calibration_factor / n_points
         y_step = 10 * self.y_calibration_factor / n_points
-
-        y = y_top_left
-        x = x_top_left
-
-        self.move('x', x)
 
         greens = []
 
-        while y < y_top_left + 10 * self.y_calibration_factor:
-            self.move('y', y)
+        x_values = [center[0] - 2.5*self.x_calibration_factor, center[0], center[0] + 2.5*self.x_calibration_factor]
 
-            processor = ImageProcessor(camera.take_picture(return_image=True))
-            # green = processor.avg_green()
-            green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
+        for x in x_values: 
 
-            if green == 255:
-                self.green_map.append([x,y,green])
+            self.move('x', x)
+            y = y_top_left
 
-            # greens.append([y,green])
+            while y < y_top_left + 10 * self.y_calibration_factor:
+                self.move('y', y)
 
-            # plt.plot(greens)
-            # plt.show()
+                processor = ImageProcessor(camera.take_picture(return_image=True))
+                # green = processor.avg_green()
+                green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
 
-            if green > greenest_value:
-                greenest_value = green
-                greenest_position = (x,y)
-                # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
-            y += y_step
+                self.whole_green_map.append([x,y,green])
+                if green >= 254:
+                    self.green_map.append([x,y,green])
+
+                # greens.append([y,green])
+
+                # plt.plot(greens)
+                # plt.show()
+
+                if green > greenest_value:
+                    greenest_value = green
+                    greenest_position = (x,y)
+                    # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
+                y += y_step
 
         self.laser_controller.switch_laser('off')
 
         if verbose:
             print(f"Greenest value:{greenest_value}")
             print(f"Greenest position:{greenest_position}")
-
 
         # self.fine_grid[*coordinate, 0] = greenest_position[0]
         # self.fine_grid[*coordinate, 1] = greenest_position[1]
@@ -361,71 +377,85 @@ class LaserPainter:
                 x = self.calibration_grid[i,j,0]
                 y = self.calibration_grid[i,j,1]
                 pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
-                pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
-                pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
-                self.fine_grid[i,j,0] = np.mean(np.array(self.green_map), axis=0)
-                self.fine_grid[i,j,1] = np.mean(np.array(self.green_map), axis=1)
+                self.scan_calibration(pos_1, 10, (i,j))
+                # pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
+                # pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
+
+                array = np.array(self.green_map)
+
+                x_values = np.array([coord[0] for coord in array])
+                y_values = np.array([coord[1] for coord in array])
+
+                self.fine_grid[i,j,0] = np.mean(x_values)
+                self.fine_grid[i,j,1] = np.mean(y_values)
+                # self.plot_green_map(f"point_{i},{j}")
+
+                print(f"Green map: {self.green_map}")
+                print(f"Fine_grid: {self.fine_grid[i,j]}")
+                print()
                 self.green_map = []
                 time.sleep(2)
 
-    # def scan_calibration(self, center, n_points, coordinate, verbose=True, line=10,mb=-10):
-    #     x_top_left = center[0] - (line/2) * self.x_calibration_factor
-    #     y_top_left = center[1] - (line/2) * self.y_calibration_factor
+    def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15,mb=-10):
+        x_top_left = center[0] - (line/2) * self.x_calibration_factor
+        y_top_left = center[1] - (line/2) * self.y_calibration_factor
 
-    #     max_brght = mb
+        max_brght = mb
 
-    #     i,j = coordinate[0], coordinate[1]
+        i,j = coordinate[0], coordinate[1]
 
-    #     max_pos = [self.calibration_grid[i,j,0],self.calibration_grid[i,j,1]]
+        max_pos = [self.calibration_grid[i,j,0],self.calibration_grid[i,j,1]]
 
-    #     camera = Camera(2) 
+        camera = Camera(2) 
 
-    #     centroids = self.centroids
+        centroids = self.centroids
 
-    #     self.laser_controller.switch_laser('on')
+        self.laser_controller.switch_laser('on')
 
-    #     # Calculate the step size for x and y movements
-    #     x_step = 10 * self.x_calibration_factor / n_points
-    #     y_step = 10 * self.y_calibration_factor / n_points
+        # Calculate the step size for x and y movements
+        x_step = 10 * self.x_calibration_factor / n_points
+        y_step = 10 * self.y_calibration_factor / n_points
 
-    #     y = y_top_left
+        y = y_top_left
 
-    #     print()
+        print()
 
-    #     while y < y_top_left + line * self.y_calibration_factor:
-    #         self.move('y', y)
-    #         x = x_top_left
+        while y < y_top_left + line * self.y_calibration_factor:
+            self.move('y', y)
+            x = x_top_left
 
-    #         brightness = []
+            brightness = []
 
-    #         while x < x_top_left + line * self.x_calibration_factor:
-    #             self.move('x', x)
+            while x < x_top_left + line * self.x_calibration_factor:
+                self.move('x', x)
 
-    #             processor = ImageProcessor(camera.take_picture(return_image=True))
+                processor = ImageProcessor(camera.take_picture(return_image=True))
 
-    #             brght = processor.compute_brightness(self.contours[3*i + j])
-    #             # brght = processor.avg_green()
-    #             brightness.append(brght)
+                brght = processor.compute_brightness(self.contours[3*i + j])
+                # brght = processor.avg_green()
+                brightness.append(brght)
 
-    #             if brght > max_brght:
-    #                 max_brght = brght  # Corrected from max_brgth to max_brght
-    #                 max_pos = (x,y)
+                if brght == 255:
+                    self.green_map.append([x,y,brght])
 
-    #             x += x_step
+                if brght > max_brght:
+                    max_brght = brght  # Corrected from max_brgth to max_brght
+                    max_pos = (x,y)
 
-    #         print(brightness)
+                x += x_step
 
-    #         if verbose:
-    #             print(f"brgth: {max_brght}, pos: {max_pos}")
+            # print(brightness)
 
-    #         y += y_step
+            if verbose:
+                print(f"brgth: {max_brght}, pos: {max_pos}")
 
+            y += y_step
 
-    #     self.fine_grid[i,j,0] = max_pos[0]
-    #     self.fine_grid[i,j,1] = max_pos[1]
+        # self.fine_grid[i,j,0] = max_pos[0]
+        # self.fine_grid[i,j,1] = max_pos[1]
 
-    #     self.laser_controller.switch_laser('off')
-    #     return max_brght
+        self.laser_controller.switch_laser('off')
+        return max_brght
 
     # def fine_tune_calibration(self):
     #     mb = np.zeros((3,3))
@@ -451,6 +481,31 @@ class LaserPainter:
     #             self.scan_calibration((x,y), 10, (i,j), line=2.5, mb=mb[i,j])
     #             time.sleep(1)
 
+
+    def plot_green_map(self, name):
+        """
+        Plots the green_map data as a color map.
+        """
+        if not self.green_map:
+            print("Green map is empty. No data to plot.")
+            return
+
+        # Extract x, y, and green values
+        x_values = [point[0] for point in self.whole_green_map]
+        y_values = [point[1] for point in self.whole_green_map]
+        green_values = [point[2] for point in self.whole_green_map]
+
+        # Normalize the green values to the range [0, 1] for color mapping
+        norm = mcolors.Normalize(vmin=min(green_values), vmax=max(green_values))
+
+        # Create the scatter plot
+        plt.scatter(x_values, y_values, c=green_values, cmap='Greens', norm=norm)
+        plt.colorbar()  # Add a color bar to indicate the scale of green values
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.title('Green Map Color Plot')
+        plt.savefig(f"{name}", format=pdf)
+        # plt.show()
 
 
     def save_calibration_data(self, filename="data/calibration_data.pkl"):
