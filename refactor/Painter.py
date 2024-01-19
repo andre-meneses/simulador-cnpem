@@ -227,8 +227,11 @@ class LaserPainter:
                 processor = ImageProcessor(camera.take_picture(return_image=True))
                 green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
 
-                self.green_map.append([x,y,gree])
+                # self.green_map.append([x,y,gree])
                 
+                if green >= 250:
+                    self.green_map.append([x,y,green])
+
                 # if green > greenest_value:
                     # greenest_value = green
                     # greenest_position = (x,y)
@@ -277,7 +280,8 @@ class LaserPainter:
 
             green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
 
-            self.green_map.append([x,y,green])
+            if green == 255:
+                self.green_map.append([x,y,green])
 
             if green > greenest_value:
                 greenest_value = green
@@ -324,7 +328,9 @@ class LaserPainter:
             processor = ImageProcessor(camera.take_picture(return_image=True))
             # green = processor.avg_green()
             green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
-            self.green_map.append([x,y,green])
+
+            if green == 255:
+                self.green_map.append([x,y,green])
 
             # greens.append([y,green])
 
@@ -357,8 +363,9 @@ class LaserPainter:
                 pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
                 pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
                 pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
-                pos_4, gv4 = self.scan_horizontal((x,pos_3[1]), 10, (i,j), gv3, pos_3)
-                pos_5, gv5 = self.scan_vertical((pos_4[0],y), 10, (i,j), gv4, pos_4)
+                self.fine_grid[i,j,0] = np.mean(np.array(self.green_map), axis=0)
+                self.fine_grid[i,j,1] = np.mean(np.array(self.green_map), axis=1)
+                self.green_map = []
                 time.sleep(2)
 
     # def scan_calibration(self, center, n_points, coordinate, verbose=True, line=10,mb=-10):
@@ -444,58 +451,6 @@ class LaserPainter:
     #             self.scan_calibration((x,y), 10, (i,j), line=2.5, mb=mb[i,j])
     #             time.sleep(1)
 
-
-
-    # def create_heatmap(self, points):
-    #    # Convert points to numpy array for easier manipulation
-    #     points_array = np.array(points)
-
-    #     # Separate x, y, and values
-    #     x_coords = points_array[:, 0]
-    #     y_coords = points_array[:, 1]
-    #     values = points_array[:, 2]
-
-    #     # Create the KDE plot
-    #     plt.figure(figsize=(8, 6))
-    #     sns.kdeplot(x=x_coords, y=y_coords, weights=values, cmap="Greens", fill=True)
-    #     plt.colorbar(label='Density')
-    #     plt.title('Heatmap in Green Scale with Seaborn')
-    #     plt.xlabel('X')
-    #     plt.ylabel('Y')
-
-    #     plt.show() 
-
-    # def find_max_z(self,points):
-
-    #     # Step 1: Find the maximum value of z
-    #     max_z = max(point[2] for point in points)
-
-    #     # Step 2: Filter points with the maximum z value
-    #     max_z_points = [point for point in points if point[2] == max_z]
-
-    #     # Step 3: Calculate the center of the region
-    #     if len(max_z_points) > 1:
-    #         avg_x = sum(point[0] for point in max_z_points) / len(max_z_points)
-    #         avg_y = sum(point[1] for point in max_z_points) / len(max_z_points)
-    #         return (avg_x, avg_y)
-    #     else:
-    #         # If there's only one point, return its (x, y) coordinates
-    #         return max_z_points[0][:2]
-
-    # def fine_tune_calibration(self):
-    #     for i, j in itertools.product(range(3), repeat=2):
-    #         coordinates = self.calibration_grid[i, j, :2]
-    #         # brightness = self.scan_calibration(coordinates, 10, (i, j))
-    #         self.scan_calibration(coordinates, 10, (i, j))
-    #         # x_max, y_max = self.find_max_z(brightness)
-
-    #         # self.fine_grid[i,j,0] = x_max
-    #         # self.fine_grid[i,j,1] = y_max
-
-    #         # print(f"x:{x_max}, y:{y_max}")
-    #         # self.create_heatmap(brightness)
-
-    #         time.sleep(2)
 
 
     def save_calibration_data(self, filename="data/calibration_data.pkl"):
