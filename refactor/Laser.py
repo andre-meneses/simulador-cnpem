@@ -29,9 +29,10 @@ if __name__ == '__main__':
     mcp = Mcp()  # Create an instance of Mcp
     laser_controller = LaserController(mcp)  # Pass the Mcp instance to LaserController
 
-    for i in range(1000):
-        laser_controller.switch_laser('on')   # Turn on the laser
-        time.sleep(0.1)                       # Wait for 0.1 seconds
-        laser_controller.switch_laser('off')  # Turn off the laser
-        time.sleep(0.1)                       # Wait for 0.1 seconds
+    laser_controller.switch_laser('off')   # Turn on the laser
+    # for i in range(1000):
+        # laser_controller.switch_laser('on')   # Turn on the laser
+        # time.sleep(0.1)                       # Wait for 0.1 seconds
+        # laser_controller.switch_laser('off')  # Turn off the laser
+        # time.sleep(0.1)                       # Wait for 0.1 seconds
 

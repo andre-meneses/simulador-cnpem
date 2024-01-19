@@ -35,7 +35,7 @@ class ImageProcessor:
         cv.waitKey(0)
         cv.destroyWindow(winname)
 
-    def compute_brightness(self, contour, enlarge_percent=200):
+    def compute_brightness(self, contour, enlarge_percent=100):
 
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
@@ -126,7 +126,10 @@ class ImageProcessor:
 
 # Example Usage
 if __name__ == "__main__":
-    image = cv.imread("images/test/captured_image_2.jpg")
+    # image = cv.imread("images/test/captured_image_2.jpg")
+    image = cv.imread("images/centroids/marked_centroids.jpg")
+    ip = ImageProcessor(image)
+    ip.show_wait_destroy('centroid', image)
 
     # avg_green_value = image_processor.avg_green()
     # if avg_green_value is not None:

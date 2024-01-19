@@ -3,7 +3,7 @@ import numpy as np
 import curses
 from Camera import Camera
 from Image_processor import ImageProcessor
-from teste import find_contour
+# from teste import find_contour
 import time
 
 class GoniometerController:
@@ -11,6 +11,7 @@ class GoniometerController:
         self.port = port
         self.baud_rate = baud_rate
         self.steps_per_degree = 12800  # Assuming 12800 steps per degree
+        self.ser = serial.Serial(self.port, self.baud_rate)
 
     def __enter__(self):
         self.ser = serial.Serial(self.port, self.baud_rate)
@@ -28,14 +29,14 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=30000, acc=5000, dec=5000, verbose=False):
+    def move(self, angle, speed=20000, acc=5000, dec=5000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
             f'PRH={angle_steps}\r\n',
             f'SPH={speed}\r\n',
-            f'ACH={acc}\r\n',
-            f'DCH={dec}\r\n',
+            # f'ACH={acc}\r\n',
+            # f'DCH={dec}\r\n',
             f'BGH\r\n',
             f'MG _BGH\r\n'
         ]

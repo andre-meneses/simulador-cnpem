@@ -1,4 +1,5 @@
 import socket
+import cv2
 import itertools
 import outils
 import pickle
@@ -72,6 +73,15 @@ class LaserPainter:
         """
         command = f"MWV:{position}\r\n".encode('utf-8')
         (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
+
+    def paint_coordinate(self, posX, posY):
+
+        print(posX)
+        print(posY)
+        self.move('x', posX)
+        self.move('y', posY)
+        self.laser_controller.switch_laser('on')
+        self.laser_controller.switch_laser('off')
 
     def paint_manually(self, stdscr):
         """
@@ -221,7 +231,7 @@ class LaserPainter:
             y = y_top_left
             x = x_top_left
 
-            while y < y_top_left + 10 * self.y_calibration_factor and x < x_top_left + 10 * self.x_calibration_factor:
+            while y < y_top_left + 15 * self.y_calibration_factor and x < x_top_left + 15 * self.x_calibration_factor:
                 self.move('y', y)
                 self.move('x', x)
 
@@ -456,32 +466,7 @@ class LaserPainter:
 
         self.laser_controller.switch_laser('off')
         return max_brght
-
-    # def fine_tune_calibration(self):
-    #     mb = np.zeros((3,3))
-
-    #     for i in range(3):
-    #         for j in range(3):
-    #             x = self.calibration_grid[i,j,0]
-    #             y = self.calibration_grid[i,j,1]
-    #             mb[i,j] = self.scan_calibration((x,y), 10, (i,j), mb=-10, line=15)
-    #             time.sleep(1)
-
-    #     for i in range(3):
-    #         for j in range(3):
-    #             x = self.calibration_grid[i,j,0]
-    #             y = self.calibration_grid[i,j,1]
-    #             mb[i,j] = self.scan_calibration((x,y), 10, (i,j), line=5, mb=mb[i,j])
-    #             time.sleep(1)
-
-    #     for i in range(3):
-    #         for j in range(3):
-    #             x = self.calibration_grid[i,j,0]
-    #             y = self.calibration_grid[i,j,1]
-    #             self.scan_calibration((x,y), 10, (i,j), line=2.5, mb=mb[i,j])
-    #             time.sleep(1)
-
-
+    
     def plot_green_map(self, name):
         """
         Plots the green_map data as a color map.
@@ -533,8 +518,9 @@ class LaserPainter:
     def compute_centroids(self):
         camera = Camera(2) 
         image = camera.take_picture(return_image=True)
+        # image = cv2.imread("images/centroids/marked_centroids.jpg")
         image_processor = ImageProcessor(image)
-        centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
+        centroids = image_processor.centroids("images/centroids/marked_centroids_image.jpg")
         self.centroids, self.contours = outils.sort_centroids(centroids)
 
 if __name__ == '__main__':
@@ -572,14 +558,14 @@ if __name__ == '__main__':
 
     # Load calibration data (can be done later or in a different run)
 
-    painter.load_calibration_data()
-    painter.compute_centroids()
+    # painter.load_calibration_data()
+    # painter.compute_centroids()
 
     # time.sleep(3)
-    painter.fine_tune_calibration()
-    painter.run_calibration_test(fine_tune=True)
+    # painter.fine_tune_calibration()
+    # painter.run_calibration_test(fine_tune=True)
 
     # Save calibration data
-    painter.save_calibration_data()
+    # painter.save_calibration_data()
 
 
