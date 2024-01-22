@@ -29,7 +29,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=30000, acc=5000, dec=5000, verbose=False):
+    def move(self, angle, speed=60000, acc=5000, dec=5000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -124,5 +124,5 @@ if __name__ == '__main__':
         # print(90 + angle2)
          
         # Ângulo entre camêras: 89° 
-        controller.move(89)
+        controller.move(-89)
 

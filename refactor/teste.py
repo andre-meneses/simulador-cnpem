@@ -47,7 +47,7 @@ def find_contour(index, camera_number):
     return area
 
 
-def get_inner_pixels_coordinates(coordinates, image_shape, margin_percent=15):
+def get_inner_pixels_coordinates(coordinates, image_shape, margin_percent=10):
     # Calculate margin in pixels
     margin_x = int(image_shape[1] * margin_percent / 100)
     margin_y = int(image_shape[0] * margin_percent / 100)
@@ -64,7 +64,7 @@ def get_inner_pixels_coordinates(coordinates, image_shape, margin_percent=15):
 def find_tumour():
 
     camera = Camera(0)
-    image = camera.take_picture(return_image=True)[70:390,130:500]
+    image = camera.take_picture(return_image=True)[65:250,130:500]
 
     img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -83,7 +83,7 @@ def find_tumour():
     cv.drawContours(mask, contours, -1, (255), thickness=cv.FILLED)
 
     # Find the pixels inside the contour
-    y, x = np.where(mask == 255)
+    y, x = np.where(mask == 0)
 
     # Combine x and y into a single array of coordinates
     inside_contour_coordinates = list(zip(x, y))
@@ -92,7 +92,9 @@ def find_tumour():
 
     show_wait_destroy('img_init',mask)
 
-    return get_inner_pixels_coordinates(sorted_coordinates,image.shape[:2]), (130,70)
+    coordinates = get_inner_pixels_coordinates(sorted_coordinates, image.shape[:2])
+
+    return coordinates, (130,60), image
 
 if __name__ == '__main__':
     # find_contour(2, 2)

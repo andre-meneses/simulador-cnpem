@@ -17,6 +17,8 @@ from sklearn.linear_model import LinearRegression
 from teste import find_tumour
 from Goniometer import GoniometerController
 from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import griddata
+from sklearn.preprocessing import PolynomialFeatures
  
 
 class LaserPainter:
@@ -80,10 +82,16 @@ class LaserPainter:
 
     def paint_coordinate(self, posX, posY):
 
-        print(posX)
-        print(posY)
+        # print(posX)
+        # print(posY)
+        posX = posX.item()
+        posY = posY.item()
+
+        # print(type(posX))
+
         self.move('x', posX)
         self.move('y', posY)
+
         self.laser_controller.switch_laser('on')
         self.laser_controller.switch_laser('off')
 
@@ -628,7 +636,7 @@ class LaserPainter:
 
 
     def paint_tumour(self, tumour_coordinates, centroid_shift):
-        x_axis = [] 
+        x_axis = []
         y_axis = []
 
         self.load_calibration_data()
@@ -657,7 +665,7 @@ class LaserPainter:
         vx = LinearRegression().fit(x_axis[:,0].reshape(-1,1), x_axis[:,1])
         vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
 
-        for x,y in tumour_coordinates[::5]:
+        for x,y in tumour_coordinates[::2]:
             # print(x)
             xPos = vx.predict(np.array(x).reshape(-1,1))
             yPos = vy.predict(np.array(y).reshape(-1,1))
@@ -665,7 +673,7 @@ class LaserPainter:
             # print(xPos)
 
             self.paint_coordinate(xPos[0],yPos[0])
-    
+
     def calibration_routine(self):
 
         with GoniometerController() as controller:
@@ -678,12 +686,19 @@ class LaserPainter:
             self.compute_centroids()
 
     def burn_tumour(self, restart=True):
-        image, centroid_shift = find_tumour()
+        list_of_pixels, centroid_shift, image= find_tumour()
+
+        # for x, y in list_of_pixels:
+            # image[y, x] = [0, 0, 255]  # Set the pixel to red
+
+        # cv2.imshow('Modified Image', image)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
 
         with GoniometerController() as controller:
-            controller.move(-89)
-            self.paint_tumour(image, centroid_shift)
             controller.move(89)
+            self.paint_tumour(list_of_pixels, centroid_shift)
+            controller.move(-89)
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
