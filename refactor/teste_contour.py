@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 import socket
 import matplotlib.pyplot as plt
 import Mcp
-# from Goniometer import GoniometerController
+from Goniometer import GoniometerController
 # from Painter import LaserPainter
 # from Socket_Connection import SocketConnection
 
@@ -46,25 +46,25 @@ def find_contour(index, camera_number):
 
     return area
 
-
-def get_inner_pixels_coordinates(coordinates, image_shape, margin_percent=15):
-    # Calculate margin in pixels
-    margin_x = int(image_shape[1] * margin_percent / 100)
-    margin_y = int(image_shape[0] * margin_percent / 100)
-
-    # Define the contour region
-    x_min, y_min = margin_x, margin_y
-    x_max, y_max = image_shape[1] - margin_x, image_shape[0] - margin_y
-
-    # Filter coordinates within the contour region
-    filtered_coords = [coord for coord in coordinates if x_min <= coord[0] <= x_max and y_min <= coord[1] <= y_max]
-
-    return filtered_coords
-
 def find_tumour():
 
     camera = Camera(0)
-    image = camera.take_picture(return_image=True)[70:390,130:500]
+    image = camera.take_picture(return_image=True)[55:390,130:500]
+
+    # centroids = np.array([[153,142], [314,131], [474,124], [157, 258], [321,248
+    # ],[482,238],[164,374],[328,365],[489,354]])
+
+    # for center in centroids:
+        # center[0] -= 130
+        # center[1] -= 55
+
+    # centroids = np.reshape(centroids, (3,3,2))
+
+    # color = (0, 255, 0)  # Green color
+    # thickness = 2
+
+    # for center in centroids:
+        # cv.circle(image, center, 30, color, thickness)
 
     img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -73,6 +73,11 @@ def find_tumour():
     ret, thresh = cv.threshold(blurred, 120, 255, cv.THRESH_BINARY)
         
     contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+
+    # draw contours on the original image
+    image_copy = image.copy()
+
+    # cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
 
     height, width = image.shape[:2]
 
@@ -90,9 +95,43 @@ def find_tumour():
 
     sorted_coordinates = sorted(inside_contour_coordinates, key=lambda coord: (coord[1], coord[0]))
 
-    show_wait_destroy('img_init',mask)
+    return sorted_coordinates, (130,55)
 
-    return get_inner_pixels_coordinates(sorted_coordinates,image.shape[:2]), (130,70)
+    # x_axis = []
+    # y_axis = []
+
+    # voltages = painter.fine_grid
+
+    # # print(voltages)
+    # # print(centroids)
+
+    # for pxs, volts in zip(centroids, voltages):
+    #     for px,volt in zip(pxs, volts):
+    #         # print(px)
+    #         # print(volt)
+    #         x_axis.append([px[0], volt[0]])
+    #         y_axis.append([px[1], volt[1]])
+
+    # # print(x_axis)
+    # x_axis = np.array(x_axis)
+    # y_axis = np.array(y_axis)
+
+    # vx = LinearRegression().fit(x_axis[:,0].reshape(-1,1), x_axis[:,1])
+    # vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
+    
+    # controller = GoniometerController()
+    # controller.move(-89)
+
+    # for x,y in sorted_coordinates[::20]:
+    #     # print(x)
+    #     xPos = vx.predict(np.array(x).reshape(-1,1))
+    #     yPos = vy.predict(np.array(y).reshape(-1,1))
+
+    #     # print(xPos)
+
+    #     painter.paint_coordinate(xPos[0],yPos[0])
+
+    # # show_wait_destroy('img_init',mask)
 
 if __name__ == '__main__':
     # find_contour(2, 2)

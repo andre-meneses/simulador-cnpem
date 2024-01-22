@@ -138,6 +138,6 @@ if __name__ == "__main__":
     centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
     if centroids:
         print("centroids:", outils.sort_centroids(centroids))
-else:
-    print("Error: Image could not be loaded.")
+    else:
+        print("Error: Image could not be loaded.")
 

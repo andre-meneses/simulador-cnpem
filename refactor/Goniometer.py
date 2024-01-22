@@ -3,7 +3,7 @@ import numpy as np
 import curses
 from Camera import Camera
 from Image_processor import ImageProcessor
-# from teste import find_contour
+from teste import find_contour
 import time
 
 class GoniometerController:
@@ -29,7 +29,7 @@ class GoniometerController:
         self.ser.write(b'MTH = -2\r\n')  
         self.ser.write(b'CN1\r\n')       
 
-    def move(self, angle, speed=20000, acc=5000, dec=5000, verbose=False):
+    def move(self, angle, speed=30000, acc=5000, dec=5000, verbose=False):
         self._prepare()
         angle_steps = str(int(angle * self.steps_per_degree))
         commands = [
@@ -44,7 +44,7 @@ class GoniometerController:
         for cmd in commands:
             self.ser.write(bytes(cmd, 'utf-8'))
 
-        for _ in range(9):
+        for _ in range(len(commands) + 3):
             self.ser.readline()
 
         state = self._parse_state(self.ser.readline())
@@ -124,5 +124,5 @@ if __name__ == '__main__':
         # print(90 + angle2)
          
         # Ângulo entre camêras: 89° 
-        controller.move(-89)
+        controller.move(89)
 

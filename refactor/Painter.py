@@ -1,4 +1,5 @@
 import socket
+import os
 import cv2
 import itertools
 import outils
@@ -12,6 +13,10 @@ from Camera import Camera
 from Image_processor import ImageProcessor
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from sklearn.linear_model import LinearRegression
+from teste import find_tumour
+from Goniometer import GoniometerController
+from scipy.interpolate import RegularGridInterpolator
  
 
 class LaserPainter:
@@ -60,7 +65,6 @@ class LaserPainter:
 
         self.contours = None
         self.centroids = np.zeros((3,3,2))
-
 
 
     def move(self, axis, position):
@@ -406,17 +410,18 @@ class LaserPainter:
                 self.green_map = []
                 time.sleep(2)
 
-    def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15,mb=-10):
+
+    def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15, mb=-10):
         x_top_left = center[0] - (line/2) * self.x_calibration_factor
         y_top_left = center[1] - (line/2) * self.y_calibration_factor
 
         max_brght = mb
 
-        i,j = coordinate[0], coordinate[1]
+        i, j = coordinate[0], coordinate[1]
 
-        max_pos = [self.calibration_grid[i,j,0],self.calibration_grid[i,j,1]]
+        max_pos = [self.calibration_grid[i, j, 0], self.calibration_grid[i, j, 1]]
 
-        camera = Camera(2) 
+        camera = Camera(2)
 
         centroids = self.centroids
 
@@ -443,15 +448,17 @@ class LaserPainter:
 
                 brght = processor.compute_brightness(self.contours[3*i + j])
                 # brght = processor.avg_green()
-                brightness.append(brght)
 
-                if brght == 255:
-                    self.green_map.append([x,y,brght])
-
-                if brght > max_brght:
-                    max_brght = brght  # Corrected from max_brgth to max_brght
-                    max_pos = (x,y)
-
+                if brght == max_brght:
+                    # Add to green_map if brightness equals max_brght
+                    self.green_map.append([x, y, brght])
+                elif brght > max_brght:
+                    # If a new maximum is found, clear the green map
+                    # and add the new maximum brightness value
+                    self.green_map = [[x, y, brght]]
+                    max_brght = brght  # Update max_brght to the new maximum
+                    max_pos = (x, y)
+                    
                 x += x_step
 
             # print(brightness)
@@ -461,11 +468,72 @@ class LaserPainter:
 
             y += y_step
 
-        # self.fine_grid[i,j,0] = max_pos[0]
-        # self.fine_grid[i,j,1] = max_pos[1]
+        # self.fine_grid[i, j, 0] = max_pos[0]
+        # self.fine_grid[i, j, 1] = max_pos[1]
 
         self.laser_controller.switch_laser('off')
         return max_brght
+
+    # def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15,mb=-10):
+    #     x_top_left = center[0] - (line/2) * self.x_calibration_factor
+    #     y_top_left = center[1] - (line/2) * self.y_calibration_factor
+
+    #     max_brght = mb
+
+    #     i,j = coordinate[0], coordinate[1]
+
+    #     max_pos = [self.calibration_grid[i,j,0],self.calibration_grid[i,j,1]]
+
+    #     camera = Camera(2) 
+
+    #     centroids = self.centroids
+
+    #     self.laser_controller.switch_laser('on')
+
+    #     # Calculate the step size for x and y movements
+    #     x_step = 10 * self.x_calibration_factor / n_points
+    #     y_step = 10 * self.y_calibration_factor / n_points
+
+    #     y = y_top_left
+
+    #     print()
+
+    #     while y < y_top_left + line * self.y_calibration_factor:
+    #         self.move('y', y)
+    #         x = x_top_left
+
+    #         brightness = []
+
+    #         while x < x_top_left + line * self.x_calibration_factor:
+    #             self.move('x', x)
+
+    #             processor = ImageProcessor(camera.take_picture(return_image=True))
+
+    #             brght = processor.compute_brightness(self.contours[3*i + j])
+    #             # brght = processor.avg_green()
+    #             brightness.append(brght)
+
+    #             if brght == 255:
+    #                 self.green_map.append([x,y,brght])
+
+    #             if brght > max_brght:
+    #                 max_brght = brght  # Corrected from max_brgth to max_brght
+    #                 max_pos = (x,y)
+
+    #             x += x_step
+
+    #         # print(brightness)
+
+    #         if verbose:
+    #             print(f"brgth: {max_brght}, pos: {max_pos}")
+
+    #         y += y_step
+
+    #     # self.fine_grid[i,j,0] = max_pos[0]
+    #     # self.fine_grid[i,j,1] = max_pos[1]
+
+    #     self.laser_controller.switch_laser('off')
+    #     return max_brght
     
     def plot_green_map(self, name):
         """
@@ -515,13 +583,107 @@ class LaserPainter:
             self.calibration_grid = data['calibration_grid']
             self.fine_grid = data['fine_grid']
 
-    def compute_centroids(self):
-        camera = Camera(2) 
-        image = camera.take_picture(return_image=True)
-        # image = cv2.imread("images/centroids/marked_centroids.jpg")
-        image_processor = ImageProcessor(image)
-        centroids = image_processor.centroids("images/centroids/marked_centroids_image.jpg")
-        self.centroids, self.contours = outils.sort_centroids(centroids)
+    # def compute_centroids(self):
+    #     camera = Camera(0) 
+    #     image = camera.take_picture(return_image=True)
+    #     # image = cv2.imread("images/centroids/marked_centroids.jpg")
+    #     image_processor = ImageProcessor(image)
+    #     centroids = image_processor.centroids("images/centroids/marked_centroids_image.jpg")
+    #     self.centroids, self.contours = outils.sort_centroids(centroids)
+
+    def compute_centroids(self, use_saved_data=False, camera_number=0):
+        if camera_number == 0:
+            if use_saved_data:
+                try:
+                    with open('data/centroids_data.pkl', 'rb') as file:
+                        self.centroids = pickle.load(file)
+                    print("Loaded centroids from file.")
+                except (FileNotFoundError, EOFError):
+                    print("File not found or empty. Computing centroids instead.")
+                    use_saved_data = False
+
+            if not use_saved_data:
+                camera = Camera(0)
+                image = camera.take_picture(return_image=True)
+                # image = cv2.imread("images/centroids/marked_centroids.jpg")
+                image_processor = ImageProcessor(image)
+                centroids = image_processor.centroids(f"images/centroids/marked_centroids_image_{camera_number}.jpg")
+                self.centroids, self.contours = outils.sort_centroids(centroids)
+
+                # Save centroids using pickle
+                if not os.path.exists('data'):
+                    os.makedirs('data')
+                with open('data/centroids_data.pkl', 'wb') as file:
+                    pickle.dump(self.centroids, file)
+                print("Computed and saved centroids.")
+
+        else:
+            camera = Camera(2) 
+            image = camera.take_picture(return_image=True)
+            # image = cv2.imread("images/centroids/marked_centroids.jpg")
+            image_processor = ImageProcessor(image)
+            centroids = image_processor.centroids(f"images/centroids/marked_centroids_image_{camera_number}.jpg")
+            self.centroids, self.contours = outils.sort_centroids(centroids)
+            print("Computed centroids camera 2")
+
+
+    def paint_tumour(self, tumour_coordinates, centroid_shift):
+        x_axis = [] 
+        y_axis = []
+
+        self.load_calibration_data()
+
+        voltages = self.fine_grid
+
+        self.compute_centroids(use_saved_data=True)
+        centroids = self.centroids
+
+        for horizontal_line in centroids:
+            for center in horizontal_line:
+                center[0] -= centroid_shift[0]
+                center[1] -= centroid_shift[1]
+
+        for pxs, volts in zip(centroids, voltages):
+            for px,volt in zip(pxs, volts):
+                # print(px)
+                # print(volt)
+                x_axis.append([px[0], volt[0]])
+                y_axis.append([px[1], volt[1]])
+
+        # print(x_axis)
+        x_axis = np.array(x_axis)
+        y_axis = np.array(y_axis)
+
+        vx = LinearRegression().fit(x_axis[:,0].reshape(-1,1), x_axis[:,1])
+        vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
+
+        for x,y in tumour_coordinates[::5]:
+            # print(x)
+            xPos = vx.predict(np.array(x).reshape(-1,1))
+            yPos = vy.predict(np.array(y).reshape(-1,1))
+
+            # print(xPos)
+
+            self.paint_coordinate(xPos[0],yPos[0])
+    
+    def calibration_routine(self):
+
+        with GoniometerController() as controller:
+            controller.calibrate_coordinates(0)
+            self.compute_centroids(camera_number=2)
+            self.load_calibration_data()
+            self.fine_tune_calibration()
+            self.save_calibration_data()
+            controller.move(-89)
+            self.compute_centroids()
+
+    def burn_tumour(self, restart=True):
+        image, centroid_shift = find_tumour()
+
+        with GoniometerController() as controller:
+            controller.move(-89)
+            self.paint_tumour(image, centroid_shift)
+            controller.move(89)
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
@@ -543,6 +705,9 @@ if __name__ == '__main__':
     caly = 20 / (153.02 + 154.22)
     
     painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
+
+    # painter.calibration_routine()
+    painter.burn_tumour()
 
     # curses.wrapper(painter.paint_manually)
     # painter.interpolate_calibration_grid(verbose=True)
