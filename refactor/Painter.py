@@ -272,9 +272,6 @@ class LaserPainter:
                 print(f"Greenest value:{greenest_value}")
                 print(f"Greenest position:{greenest_position}")
 
-            # self.fine_grid[*coordinate, 0] = greenest_position[0]
-            # self.fine_grid[*coordinate, 1] = greenest_position[1]
-
         if len(self.green_map) != 0:
             greens = np.array(self.green_map)
             x_values = np.array([coord[0] for coord in greens])
@@ -332,9 +329,6 @@ class LaserPainter:
             print(f"Greenest value:{greenest_value}")
             print(f"Greenest position:{greenest_position}")
 
-        # self.fine_grid[*coordinate, 0] = greenest_position[0]
-        # self.fine_grid[*coordinate, 1] = greenest_position[1]
-
         return greenest_position, greenest_value
 
     def scan_vertical(self, center, n_points, coordinate, gv, gp, verbose=True):
@@ -387,9 +381,6 @@ class LaserPainter:
         if verbose:
             print(f"Greenest value:{greenest_value}")
             print(f"Greenest position:{greenest_position}")
-
-        # self.fine_grid[*coordinate, 0] = greenest_position[0]
-        # self.fine_grid[*coordinate, 1] = greenest_position[1]
 
         return greenest_position, greenest_value 
 
@@ -476,73 +467,9 @@ class LaserPainter:
 
             y += y_step
 
-        # self.fine_grid[i, j, 0] = max_pos[0]
-        # self.fine_grid[i, j, 1] = max_pos[1]
-
         self.laser_controller.switch_laser('off')
         return max_brght
-
-    # def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15,mb=-10):
-    #     x_top_left = center[0] - (line/2) * self.x_calibration_factor
-    #     y_top_left = center[1] - (line/2) * self.y_calibration_factor
-
-    #     max_brght = mb
-
-    #     i,j = coordinate[0], coordinate[1]
-
-    #     max_pos = [self.calibration_grid[i,j,0],self.calibration_grid[i,j,1]]
-
-    #     camera = Camera(2) 
-
-    #     centroids = self.centroids
-
-    #     self.laser_controller.switch_laser('on')
-
-    #     # Calculate the step size for x and y movements
-    #     x_step = 10 * self.x_calibration_factor / n_points
-    #     y_step = 10 * self.y_calibration_factor / n_points
-
-    #     y = y_top_left
-
-    #     print()
-
-    #     while y < y_top_left + line * self.y_calibration_factor:
-    #         self.move('y', y)
-    #         x = x_top_left
-
-    #         brightness = []
-
-    #         while x < x_top_left + line * self.x_calibration_factor:
-    #             self.move('x', x)
-
-    #             processor = ImageProcessor(camera.take_picture(return_image=True))
-
-    #             brght = processor.compute_brightness(self.contours[3*i + j])
-    #             # brght = processor.avg_green()
-    #             brightness.append(brght)
-
-    #             if brght == 255:
-    #                 self.green_map.append([x,y,brght])
-
-    #             if brght > max_brght:
-    #                 max_brght = brght  # Corrected from max_brgth to max_brght
-    #                 max_pos = (x,y)
-
-    #             x += x_step
-
-    #         # print(brightness)
-
-    #         if verbose:
-    #             print(f"brgth: {max_brght}, pos: {max_pos}")
-
-    #         y += y_step
-
-    #     # self.fine_grid[i,j,0] = max_pos[0]
-    #     # self.fine_grid[i,j,1] = max_pos[1]
-
-    #     self.laser_controller.switch_laser('off')
-    #     return max_brght
-    
+   
     def plot_green_map(self, name):
         """
         Plots the green_map data as a color map.
@@ -590,14 +517,6 @@ class LaserPainter:
             data = pickle.load(file)
             self.calibration_grid = data['calibration_grid']
             self.fine_grid = data['fine_grid']
-
-    # def compute_centroids(self):
-    #     camera = Camera(0) 
-    #     image = camera.take_picture(return_image=True)
-    #     # image = cv2.imread("images/centroids/marked_centroids.jpg")
-    #     image_processor = ImageProcessor(image)
-    #     centroids = image_processor.centroids("images/centroids/marked_centroids_image.jpg")
-    #     self.centroids, self.contours = outils.sort_centroids(centroids)
 
     def compute_centroids(self, use_saved_data=False, camera_number=0):
         if camera_number == 0:
