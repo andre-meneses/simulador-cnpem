@@ -113,6 +113,15 @@ class GoniometerController:
         self.move(mpoint[0])
         return mpoint[0]
 
+    def construct_3d_model(self):
+        camera = Camera(0)
+
+        for i in range(360):
+            camera.take_picture(f"images/reconstruction/angle_{i}.jpg")
+            self.move(1)
+
+
+
 if __name__ == '__main__':
     with GoniometerController() as controller:
         # controller.ser.write(b'ST\r\n')
@@ -124,5 +133,6 @@ if __name__ == '__main__':
         # print(90 + angle2)
          
         # Ângulo entre camêras: 89° 
-        controller.move(-89)
+        # controller.move(-89)
+        controller.construct_3d_model()
 

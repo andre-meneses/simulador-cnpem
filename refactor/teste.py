@@ -96,7 +96,6 @@ def find_tumour():
 
     return coordinates, (130,60), image
 
-def reconstruct_image():
 
 
 if __name__ == '__main__':
