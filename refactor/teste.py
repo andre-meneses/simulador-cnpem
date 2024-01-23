@@ -11,11 +11,13 @@ import Mcp
 # from Socket_Connection import SocketConnection
 
 
-def show_wait_destroy(winname, img):
-    cv.imshow(winname, img)
-    cv.moveWindow(winname, 500, 0)
-    cv.waitKey(0)
-    cv.destroyWindow(winname)
+# def show_wait_destroy(winname, img):
+#     cv.imshow(winname, img)
+#     cv.moveWindow(winname, 500, 0)
+#     cv.waitKey(0)
+#     cv.destroyWindow(winname)
+
+from outils import show_wait_destroy
 
 def find_contour(index, camera_number):
     camera = Camera(camera_number)
