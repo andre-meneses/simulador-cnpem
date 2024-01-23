@@ -136,37 +136,6 @@ class GoniometerController:
             images.append(img)
             # show_wait_destroy('a',img)
 
-        depth_maps = []
-        stereo = cv.StereoBM_create(numDisparities=16, blockSize=15)
-
-        for img in images:
-            disparity = stereo.compute(img, img)
-            disparity_normalized = cv.normalize(disparity, None, 0, 255, cv.NORM_MINMAX, cv.CV_8U)
-            # Append the normalized disparity map to the list of depth maps
-            depth_maps.append(disparity_normalized)
-
-        # Visualize all the depth maps
-
-        sum_depth_map = np.zeros_like(depth_maps[0], dtype=np.float64)
-
-        # Compute the sum of all depth maps
-
-        for depth_map in depth_maps:
-            sum_depth_map += depth_map.astype(np.float64)
-
-        # Calculate the mean depth map by dividing the sum by the number of depth maps
-        mean_depth_map = (sum_depth_map / len(depth_maps)).astype(np.uint8)
-        # Display the mean depth map
-        
-        points_3D = cv2.reprojectImageTo3D(mean_depth_map.astype(np.float32), np.eye(4))
-
-        verts, faces, normals, values = measure.marching_cubes(points_3D)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_trisurf(verts[:, 0], verts[:, 1], verts[:, 2], triangles=faces)
-        plt.show()
-
 if __name__ == '__main__':
     with GoniometerController() as controller:
         # controller.ser.write(b'ST\r\n')
