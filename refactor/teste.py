@@ -108,12 +108,14 @@ def calibrate_camera(image_folder):
     for fname in images:
         img = cv.imread(fname)
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        show_wait_destroy('img',img)
+        gray = 255-img
+        # show_wait_destroy('img',gray)
 
-        flag = cv2.CALIB_CB_SYMMETRIC_GRID + cv2.CALIB_CB_CLUSTERING
+        flag = cv.CALIB_CB_SYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING
 
         # Find the circle grid
-        ret, centers = cv2.findCirclesGrid(gray, (3, 3), flags=flag)
+        ret, centers = cv.findCirclesGrid(gray, (3, 3), flags=flag)
+        # print(centers)
 
         if ret:
             objpoints.append(objp)
@@ -121,10 +123,10 @@ def calibrate_camera(image_folder):
 
             # Draw and display the corners
             img = cv.drawChessboardCorners(img, (3, 3), centers, ret)
-            show_wait_destroy('img', img)
+            # show_wait_destroy('img', img)
 
     # Camera calibration
-    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1][:2], None, None)
 
     return mtx, dist  # Return camera matrix and distortion coefficients
 
@@ -170,9 +172,9 @@ if __name__ == '__main__':
 
     #-----------------------------------------------------------------------------------------
     # Calibrate camera and save data
-    camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
+    # camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
 
-    save_calibration_data(camera_matrix, distortion_coefficients)
+    # save_calibration_data(camera_matrix, distortion_coefficients)
 
     # Load calibration data
     loaded_camera_matrix, loaded_distortion_coefficients = load_calibration_data()
