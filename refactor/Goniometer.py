@@ -4,6 +4,7 @@ import curses
 from Camera import Camera
 from Image_processor import ImageProcessor
 from teste import find_contour
+import matplotlib.pyplot as plt
 from outils import show_wait_destroy
 import time
 import os
@@ -136,6 +137,28 @@ class GoniometerController:
 
         for img in images:
             disparity = stereo.compute(img, img)
+            disparity_normalized = cv2.normalize(disparity, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+            # Append the normalized disparity map to the list of depth maps
+            depth_maps.append(disparity_normalized)
+
+        # Visualize all the depth maps
+        num_rows = 5  # Specify the number of rows
+        num_cols = 10  # Specify the number of columns
+
+        fig, axs = plt.subplots(num_rows, num_cols, figsize=(15, 8))
+
+        for i, depth_map in enumerate(depth_maps):
+            row_index = i // num_cols  # Calculate the row index for the subplot
+            col_index = i % num_cols   # Calculate the column index for the subplot
+            axs[row_index, col_index].imshow(depth_map, cmap='jet')
+            axs[row_index, col_index].axis('off')
+        # Fill any remaining empty subplots with a white background
+
+        for i in range(len(depth_maps), num_rows * num_cols):
+            row_index = i // num_cols
+            col_index = i % num_cols
+            axs[row_index, col_index].axis('off')
+        plt.show()
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
