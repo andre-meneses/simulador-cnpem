@@ -6,16 +6,8 @@ from sklearn.linear_model import LinearRegression
 import socket
 import matplotlib.pyplot as plt
 import Mcp
-# from Goniometer import GoniometerController
-# from Painter import LaserPainter
-# from Socket_Connection import SocketConnection
-
-
-# def show_wait_destroy(winname, img):
-#     cv.imshow(winname, img)
-#     cv.moveWindow(winname, 500, 0)
-#     cv.waitKey(0)
-#     cv.destroyWindow(winname)
+import glob
+import pickle
 
 from outils import show_wait_destroy
 
@@ -98,33 +90,94 @@ def find_tumour():
 
     return coordinates, (130,60), image
 
+def calibrate_camera(image_folder):
+    # termination criteria
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    # prepare object points for a 3x3 grid
+    objp = np.zeros((3*3, 3), np.float32)
+    objp[:,:2] = np.mgrid[0:3, 0:3].T.reshape(-1, 2)
+
+    # Arrays to store object points and image points
+    objpoints = []  # 3D points in real world space
+    imgpoints = []  # 2D points in image plane
+
+    # Read images
+    images = glob.glob(f'{image_folder}/*.jpg')
+
+    for fname in images:
+        img = cv.imread(fname)
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+
+        # Find the circle grid
+        ret, centers = cv.findCirclesGrid(gray, (3, 3), None)
+
+        if ret:
+            objpoints.append(objp)
+            imgpoints.append(centers)
+
+            # Draw and display the corners
+            img = cv.drawChessboardCorners(img, (3, 3), centers, ret)
+            cv.imshow('img', img)
+            cv.waitKey(500)
+
+    cv.destroyAllWindows()
+
+    # Camera calibration
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+    return mtx, dist  # Return camera matrix and distortion coefficients
+
+def save_calibration_data(camera_matrix, distortion_coefficients, filename='calibration_data.pkl'):
+    with open(filename, 'wb') as f:
+        pickle.dump((camera_matrix, distortion_coefficients), f)
+        print(f"Calibration data saved to {filename}")
+
+def load_calibration_data(filename='calibration_data.pkl'):
+    with open(filename, 'rb') as f:
+        camera_matrix, distortion_coefficients = pickle.load(f)
+    return camera_matrix, distortion_coefficients
+
 
 if __name__ == '__main__':
     # find_contour(2, 2)
-    host_x = "192.168.0.11"  # Server's IP address
-    host_y = "192.168.1.10"  # Server's IP address
+    # host_x = "192.168.0.11"  # Server's IP address
+    # host_y = "192.168.1.10"  # Server's IP address
 
-    port = 10001  # Port used by the server
+    # port = 10001  # Port used by the server
 
-    socket_x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket_y = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # socket_x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # socket_y = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    try:
-        socket_x.connect((host_x, port))
-        socket_y.connect((host_y, port))
-    except socket.error as e:
-        print(f"Error connecting to socket: {e}")
+    # try:
+    #     socket_x.connect((host_x, port))
+    #     socket_y.connect((host_y, port))
+    # except socket.error as e:
+    #     print(f"Error connecting to socket: {e}")
 
-    mcp = Mcp.Mcp()
-    calx = 20 / (113.41 + 114.21)
-    caly = 20 / (153.02 + 154.22)
+    # mcp = Mcp.Mcp()
+    # calx = 20 / (113.41 + 114.21)
+    # caly = 20 / (153.02 + 154.22)
     
-    controller = GoniometerController()
-    controller.move(89)
+    # controller = GoniometerController()
+    # controller.move(89)
 
-    painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
+    # painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
     
-    painter.load_calibration_data()
+    # painter.load_calibration_data()
 
-    find_tumour(painter)
-   
+    # find_tumour(painter)
+
+    #-----------------------------------------------------------------------------------------
+    # Calibrate camera and save data
+    camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
+
+    save_calibration_data(camera_matrix, distortion_coefficients)
+
+    # Load calibration data
+    loaded_camera_matrix, loaded_distortion_coefficients = load_calibration_data()
+
+    print("Loaded Camera Matrix:\n", loaded_camera_matrix)
+    print("Loaded Distortion Coefficients:\n", loaded_distortion_coefficients)
+
+
