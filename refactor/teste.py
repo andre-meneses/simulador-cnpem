@@ -110,8 +110,10 @@ def calibrate_camera(image_folder):
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         show_wait_destroy('img',img)
 
+        flag = cv2.CALIB_CB_SYMMETRIC_GRID + cv2.CALIB_CB_CLUSTERING
+
         # Find the circle grid
-        ret, centers = cv.findCirclesGrid(gray, (3, 3), None)
+        ret, centers = cv2.findCirclesGrid(gray, (3, 3), flags=flag)
 
         if ret:
             objpoints.append(objp)
