@@ -9,6 +9,9 @@ from outils import show_wait_destroy
 import time
 import os
 import cv2 as cv
+from scipy.spatial import Delaunay
+from skimage import measure
+from skimage.measure import marching_cubes
 
 class GoniometerController:
     def __init__(self, port='/dev/ttyUSB0', baud_rate=115200):
@@ -154,12 +157,15 @@ class GoniometerController:
         # Calculate the mean depth map by dividing the sum by the number of depth maps
         mean_depth_map = (sum_depth_map / len(depth_maps)).astype(np.uint8)
         # Display the mean depth map
+        
+        points_3D = cv2.reprojectImageTo3D(mean_depth_map.astype(np.float32), np.eye(4))
 
-        plt.figure(figsize=(8, 6))
-        plt.imshow(mean_depth_map, cmap='jet')
-        plt.title('Mean Depth Map')
-        plt.axis('off')
-        plt.show() 
+        verts, faces, normals, values = measure.marching_cubes(points_3D)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_trisurf(verts[:, 0], verts[:, 1], verts[:, 2], triangles=faces)
+        plt.show()
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
