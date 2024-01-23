@@ -108,6 +108,7 @@ def calibrate_camera(image_folder):
     for fname in images:
         img = cv.imread(fname)
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        show_wait_destroy('img',img)
 
         # Find the circle grid
         ret, centers = cv.findCirclesGrid(gray, (3, 3), None)
@@ -118,10 +119,7 @@ def calibrate_camera(image_folder):
 
             # Draw and display the corners
             img = cv.drawChessboardCorners(img, (3, 3), centers, ret)
-            cv.imshow('img', img)
-            cv.waitKey(500)
-
-    cv.destroyAllWindows()
+            show_wait_destroy('img', img)
 
     # Camera calibration
     ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
