@@ -55,10 +55,13 @@ def get_inner_pixels_coordinates(coordinates, image_shape, margin_percent=10):
 
     return filtered_coords
 
-def find_tumour():
+def find_tumour(image=None):
 
-    camera = Camera(0)
-    image = camera.take_picture(return_image=True)[65:250,130:500]
+    if image is None:
+        camera = Camera(0)
+        image = camera.take_picture(return_image=True)[65:250,130:500]
+    else:
+        image = cv.imread(image)[65:250,130:500]
 
     img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -84,11 +87,11 @@ def find_tumour():
 
     sorted_coordinates = sorted(inside_contour_coordinates, key=lambda coord: (coord[1], coord[0]))
 
-    show_wait_destroy('img_init',mask)
+    # show_wait_destroy('img_init',mask)
 
     coordinates = get_inner_pixels_coordinates(sorted_coordinates, image.shape[:2])
 
-    return coordinates, (130,60), image
+    return coordinates, (130,65), image
 
 def calibrate_camera(image_folder):
     # termination criteria
@@ -130,12 +133,12 @@ def calibrate_camera(image_folder):
 
     return mtx, dist  # Return camera matrix and distortion coefficients
 
-def save_calibration_data(camera_matrix, distortion_coefficients, filename='calibration_data.pkl'):
+def save_calibration_data(camera_matrix, distortion_coefficients, filename='data/camera_calibration_data.pkl'):
     with open(filename, 'wb') as f:
         pickle.dump((camera_matrix, distortion_coefficients), f)
         print(f"Calibration data saved to {filename}")
 
-def load_calibration_data(filename='calibration_data.pkl'):
+def load_calibration_data(filename='data/camera_calibration_data.pkl'):
     with open(filename, 'rb') as f:
         camera_matrix, distortion_coefficients = pickle.load(f)
     return camera_matrix, distortion_coefficients
@@ -172,9 +175,9 @@ if __name__ == '__main__':
 
     #-----------------------------------------------------------------------------------------
     # Calibrate camera and save data
-    # camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
+    camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
 
-    # save_calibration_data(camera_matrix, distortion_coefficients)
+    save_calibration_data(camera_matrix, distortion_coefficients)
 
     # Load calibration data
     loaded_camera_matrix, loaded_distortion_coefficients = load_calibration_data()
