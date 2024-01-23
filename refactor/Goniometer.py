@@ -143,23 +143,23 @@ class GoniometerController:
             depth_maps.append(disparity_normalized)
 
         # Visualize all the depth maps
-        num_rows = 6 # Specify the number of rows
-        num_cols = 6  # Specify the number of columns
 
-        fig, axs = plt.subplots(num_rows, num_cols, figsize=(15, 8))
+        sum_depth_map = np.zeros_like(depth_maps[0], dtype=np.float64)
 
-        for i, depth_map in enumerate(depth_maps[::10]):
-            row_index = i // num_cols  # Calculate the row index for the subplot
-            col_index = i % num_cols   # Calculate the column index for the subplot
-            axs[row_index, col_index].imshow(depth_map, cmap='jet')
-            axs[row_index, col_index].axis('off')
-        # Fill any remaining empty subplots with a white background
+        # Compute the sum of all depth maps
 
-        for i in range(len(depth_maps), num_rows * num_cols):
-            row_index = i // num_cols
-            col_index = i % num_cols
-            axs[row_index, col_index].axis('off')
-        plt.show()
+        for depth_map in depth_maps:
+            sum_depth_map += depth_map.astype(np.float64)
+
+        # Calculate the mean depth map by dividing the sum by the number of depth maps
+        mean_depth_map = (sum_depth_map / len(depth_maps)).astype(np.uint8)
+        # Display the mean depth map
+
+        plt.figure(figsize=(8, 6))
+        plt.imshow(mean_depth_map, cmap='jet')
+        plt.title('Mean Depth Map')
+        plt.axis('off')
+        plt.show() 
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
