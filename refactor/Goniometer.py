@@ -131,23 +131,24 @@ class GoniometerController:
             img_path = os.path.join(dataset_dir, f"angle_{i}.jpg")
             img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)[65:250,130:500]
             images.append(img)
+            # show_wait_destroy('a',img)
 
-        depth_map = []
-        stereo = cv.StereoBM_create(numDisparities=16, blocksize=15)
+        depth_maps = []
+        stereo = cv.StereoBM_create(numDisparities=16, blockSize=15)
 
         for img in images:
             disparity = stereo.compute(img, img)
-            disparity_normalized = cv2.normalize(disparity, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+            disparity_normalized = cv.normalize(disparity, None, 0, 255, cv.NORM_MINMAX, cv.CV_8U)
             # Append the normalized disparity map to the list of depth maps
             depth_maps.append(disparity_normalized)
 
         # Visualize all the depth maps
-        num_rows = 5  # Specify the number of rows
-        num_cols = 10  # Specify the number of columns
+        num_rows = 6 # Specify the number of rows
+        num_cols = 6  # Specify the number of columns
 
         fig, axs = plt.subplots(num_rows, num_cols, figsize=(15, 8))
 
-        for i, depth_map in enumerate(depth_maps):
+        for i, depth_map in enumerate(depth_maps[::10]):
             row_index = i // num_cols  # Calculate the row index for the subplot
             col_index = i % num_cols   # Calculate the column index for the subplot
             axs[row_index, col_index].imshow(depth_map, cmap='jet')
