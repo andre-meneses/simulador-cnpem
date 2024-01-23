@@ -1,4 +1,5 @@
 import numpy as np
+import cv2 as cv
 
 def sort_centroids(centroids):
     # Sort centroids by y-coordinate
@@ -13,5 +14,11 @@ def sort_centroids(centroids):
 
     # Flatten and reshape into a 3x3x2 array
     return np.array([c for batch in sorted_batches_centroids for c in batch]).reshape(3, 3, 2), sorted_batches_contours
+
+def show_wait_destroy(winname, img):
+    cv.imshow(winname, img)
+    cv.moveWindow(winname, 500, 0)
+    cv.waitKey(0)
+    cv.destroyWindow(winname)
 
 

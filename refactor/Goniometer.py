@@ -4,7 +4,10 @@ import curses
 from Camera import Camera
 from Image_processor import ImageProcessor
 from teste import find_contour
+from outils import show_wait_destroy
 import time
+import os
+import cv2 as cv
 
 class GoniometerController:
     def __init__(self, port='/dev/ttyUSB0', baud_rate=115200):
@@ -116,11 +119,23 @@ class GoniometerController:
     def construct_3d_model(self):
         camera = Camera(0)
 
+        # for i in range(360):
+            # camera.take_picture(f"images/reconstruction/angle_{i}.jpg")
+            # self.move(1)
+        
+        dataset_dir = "images/reconstruction"
+        images = []
+
         for i in range(360):
-            camera.take_picture(f"images/reconstruction/angle_{i}.jpg")
-            self.move(1)
+            img_path = os.path.join(dataset_dir, f"angle_{i}.jpg")
+            img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)[65:250,130:500]
+            images.append(img)
 
+        depth_map = []
+        stereo = cv.StereoBM_create(numDisparities=16, blocksize=15)
 
+        for img in images:
+            disparity = stereo.compute(img, img)
 
 if __name__ == '__main__':
     with GoniometerController() as controller:

@@ -97,7 +97,6 @@ def find_tumour():
     return coordinates, (130,60), image
 
 
-
 if __name__ == '__main__':
     # find_contour(2, 2)
     host_x = "192.168.0.11"  # Server's IP address
