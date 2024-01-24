@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from teste import load_calibration_data
 from teste import find_tumour
 
-def compute_camera_matrix(intrinsic_matrix, angle, radius=25):
+def compute_camera_matrix(intrinsic_matrix, angle, radius=2):
     """
     Compute the camera matrix for a given angle.
 
@@ -41,8 +41,6 @@ def compute_camera_matrix(intrinsic_matrix, angle, radius=25):
     extrinsic_matrix = np.vstack((rotation_matrix.T, translation_vector)).T
     camera_matrix = intrinsic_matrix @ extrinsic_matrix
 
-    print(camera_matrix)
-
     return camera_matrix
 
 def visualize_voxel_grid(voxel_grid):
@@ -73,7 +71,7 @@ def main(intrinsic_matrix):
     silhouettes = [find_tumour(image)[0] for image in silhouettes]
 
     # Initialize 3D voxel grid
-    grid_size_x, grid_size_y, grid_size_z = 50, 50, 50
+    grid_size_x, grid_size_y, grid_size_z = 2, 2, 2
     voxel_grid = np.zeros((grid_size_x, grid_size_y, grid_size_z))
 
     # Compute the visual hull
@@ -86,7 +84,9 @@ def main(intrinsic_matrix):
                     camera_matrix = compute_camera_matrix(intrinsic_matrix, i)
                     # print(f"camera_matrix:{camera_matrix} and voxel:{voxel}")
                     projected_point = camera_matrix @ voxel
-                    print(projected_point)
+                    # print(f"Projected Point:{projected_point}, voxel:{voxel}" )
+                    if projected_point[2] == 0:
+                        continue
                     px, py = projected_point[:2] / projected_point[2]
                     projected_x, projected_y = int(px), int(py)
                     if (projected_x, projected_y) not in silhouette:

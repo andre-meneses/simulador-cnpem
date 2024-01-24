@@ -123,17 +123,18 @@ class GoniometerController:
     def construct_3d_model(self):
         camera = Camera(0)
 
-        # for i in range(360):
-            # camera.take_picture(f"images/reconstruction/angle_{i}.jpg")
-            # self.move(1)
-        
-        dataset_dir = "images/reconstruction"
-        images = []
-
         for i in range(360):
-            img_path = os.path.join(dataset_dir, f"angle_{i}.jpg")
-            img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)[65:250,130:500]
-            images.append(img)
+            camera.take_picture(f"images/reconstruction/angle_{i}.jpg")
+            self.move(1)
+        
+        # dataset_dir = "images/reconstruction"
+        # images = []
+
+        # for i in range(360):
+            # img_path = os.path.join(dataset_dir, f"angle_{i}.jpg")
+            # img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)[65:250,130:500]
+            # images.append(img)
+            # return (img)
             # show_wait_destroy('a',img)
 
 if __name__ == '__main__':

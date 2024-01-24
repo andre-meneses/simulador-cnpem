@@ -59,9 +59,9 @@ def find_tumour(image=None):
 
     if image is None:
         camera = Camera(0)
-        image = camera.take_picture(return_image=True)[65:250,130:500]
+        image = camera.take_picture(return_image=True)[65:275,130:500]
     else:
-        image = cv.imread(image)[65:250,130:500]
+        image = cv.imread(image)[65:275,130:500]
 
     img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -79,6 +79,13 @@ def find_tumour(image=None):
     # Draw the filled contour on the mask
     cv.drawContours(mask, contours, -1, (255), thickness=cv.FILLED)
 
+    img = 255 - thresh
+    contours_aa, hierarchy = cv.findContours(image=img, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+
+    cv.drawContours(image, contours_aa, -1, (255), thickness=cv.FILLED)
+
+    # show_wait_destroy('a', image)
+
     # Find the pixels inside the contour
     y, x = np.where(mask == 0)
 
@@ -89,9 +96,9 @@ def find_tumour(image=None):
 
     # show_wait_destroy('img_init',mask)
 
-    coordinates = get_inner_pixels_coordinates(sorted_coordinates, image.shape[:2])
+    # coordinates = get_inner_pixels_coordinates(sorted_coordinates, image.shape[:2])
 
-    return coordinates, (130,65), image
+    return sorted_coordinates, (130,65), image, contours_aa
 
 def calibrate_camera(image_folder):
     # termination criteria
