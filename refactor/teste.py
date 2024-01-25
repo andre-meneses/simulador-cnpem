@@ -129,16 +129,3 @@ if __name__ == '__main__':
 
     # find_tumour(painter)
 
-    #-----------------------------------------------------------------------------------------
-    # Calibrate camera and save data
-    camera_matrix, distortion_coefficients = calibrate_camera("images/camera_calibration")
-
-    save_calibration_data(camera_matrix, distortion_coefficients)
-
-    # Load calibration data
-    loaded_camera_matrix, loaded_distortion_coefficients = load_calibration_data()
-
-    print("Loaded Camera Matrix:\n", loaded_camera_matrix)
-    print("Loaded Distortion Coefficients:\n", loaded_distortion_coefficients)
-
-

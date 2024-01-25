@@ -605,7 +605,7 @@ class LaserPainter:
             self.compute_centroids()
 
     def burn_tumour(self, restart=True):
-        list_of_pixels, centroid_shift, image= find_tumour()
+        list_of_pixels, centroid_shift, image = find_tumour()
 
         # for x, y in list_of_pixels:
             # image[y, x] = [0, 0, 255]  # Set the pixel to red

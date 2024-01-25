@@ -87,7 +87,7 @@ class GoniometerController:
         curses.echo()
         curses.endwin()
 
-    def calibrate_coordinates(self, camera):
+    def calibrate_goniometer(self, camera):
         angle = 0
 
         angle_areas = []
