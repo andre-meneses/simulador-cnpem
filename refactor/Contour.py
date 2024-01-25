@@ -66,11 +66,19 @@ class SilhouetteTo3D:
 
     def plot_shell(self):
         cloud = pv.PolyData(np.array(self.points_cloud))
-        mesh = point_cloud.reconstruct_surface()
-        mesh.save('data/mesh.stl')
 
-        # point_cloud.plot(eye_dome_lighting=True)
-        mesh.plot(color='orange')
+        # surf = cloud.delaunay_3d(alpha=20)
+        surf = cloud.delaunay_3d()
+        # surf.save('mesh.obj')
+        surf.plot(show_edges=False)
+        voxels = pv.voxelize(surf, check_surface=False)
+        # slices = voxels.slice_orthogonal()
+        # slices.plot(show_edges=True)
+        # coords = np.array(voxels.points)
+        # print(coords)
+        # voxels.save('tumor.obj')
+        # voxels.plot()
+
 
 if __name__ == "__main__":
 
