@@ -11,9 +11,15 @@ class Tumour:
     def rotate_tumour(self, theta):
         theta = np.deg2rad(theta)
         rotation_matrix = np.array([[np.cos(theta), 0, np.sin(theta)],[0, 1, 0],[-np.sin(theta), 0, np.cos(theta)]])
-        return np.dot(rotation_matrix, coordinates.T)
+        return np.dot(rotation_matrix, self.coordinates.T).T
 
     def sanity_plot(self):
+
+        # x = self.coordinates[:,0]
+        # y = self.coordinates[:,1]
+        # z = self.coordinates[:,2]
+
+        self.coordinates = self.rotate_tumour(45)
 
         x = self.coordinates[:,0]
         y = self.coordinates[:,1]
