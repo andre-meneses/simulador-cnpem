@@ -3,27 +3,6 @@ import cv2
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-def plot_voxels(voxels, occupancy, threshold=0.5):
-    """
-    Plot voxels with occupancy greater than a specified threshold.
-
-    :param voxels: Numpy array of voxel points, shape (N, 3).
-    :param occupancy: Numpy array of occupancy values, shape (N,).
-    :param threshold: Minimum occupancy value to plot a voxel.
-    """
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    # Filter voxels based on the occupancy threshold
-    x, y, z = voxels[occupancy > threshold].T
-
-    ax.scatter(x, y, z, c='b', marker='o')
-    ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
-    plt.title('3D Voxel Plot')
-    plt.show()
-
 def sort_centroids(centroids):
     # Sort centroids by y-coordinate
     sorted_by_y = sorted(centroids, key=lambda k: k[1])
