@@ -50,9 +50,7 @@ class SilhouetteTo3D:
     def convert_coordinates(self):
         for point in self.points:
             point_1 = self.cyl2cart(point)
-            point_2 = [point_1[0], -1*point_1[1], point_1[2]]
             self.points_cloud.append(point_1)
-            self.points_cloud.append(point_2)
 
     def plot_cloud(self):
         fig = plt.figure()
@@ -76,8 +74,10 @@ class SilhouetteTo3D:
 
 if __name__ == "__main__":
 
+    # img_index = [i for i in range(90)] + [j for j in range(270,360)]
+    img_index = [i for i in range(180)] 
     image_folder = "images/reconstruction"
-    images = [f'{image_folder}/angle_{i}.jpg' for i in range(89)]
+    images = [f'{image_folder}/angle_{i}.jpg' for i in img_index]
     contours = [find_tumour(image)[3] for image in images]
     contours = [max(contour, key=cv2.contourArea) for contour in contours]
 
@@ -89,5 +89,6 @@ if __name__ == "__main__":
     
     s23.convert_coordinates()
     s23.plot_shell()
+    # s23.plot_cloud()
 
 
