@@ -24,7 +24,7 @@ class ImageProcessor:
 
         pixel = (pixel[1], pixel[0])
 
-        return self.image[*pixel, color]
+        # return self.image[*pixel, color]
 
     def compute_whole_brightness(self):
         gray_cropped = cv.cvtColor(self.image, cv.COLOR_BGR2GRAY)

@@ -66,11 +66,11 @@ class SilhouetteTo3D:
 
     def plot_shell(self):
         cloud = pv.PolyData(np.array(self.points_cloud))
-        cloud.plot()
+        mesh = point_cloud.reconstruct_surface()
+        mesh.save('data/mesh.stl')
 
-        volume = cloud.delaunay_3d(alpha=2.)
-        shell = volume.extract_geometry()
-        shell.plot()
+        # point_cloud.plot(eye_dome_lighting=True)
+        mesh.plot(color='orange')
 
 if __name__ == "__main__":
 
