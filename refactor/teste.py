@@ -100,57 +100,6 @@ def find_tumour(image=None):
 
     return sorted_coordinates, (130,65), image, contours_aa
 
-def calibrate_camera(image_folder):
-    # termination criteria
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-    # prepare object points for a 3x3 grid
-    objp = np.zeros((3*3, 3), np.float32)
-    objp[:,:2] = np.mgrid[0:3, 0:3].T.reshape(-1, 2)
-
-    # Arrays to store object points and image points
-    objpoints = []  # 3D points in real world space
-    imgpoints = []  # 2D points in image plane
-
-    # Read images
-    images = glob.glob(f'{image_folder}/*.jpg')
-
-    for fname in images:
-        img = cv.imread(fname)
-        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        gray = 255-img
-        # show_wait_destroy('img',gray)
-
-        flag = cv.CALIB_CB_SYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING
-
-        # Find the circle grid
-        ret, centers = cv.findCirclesGrid(gray, (3, 3), flags=flag)
-        # print(centers)
-
-        if ret:
-            objpoints.append(objp)
-            imgpoints.append(centers)
-
-            # Draw and display the corners
-            img = cv.drawChessboardCorners(img, (3, 3), centers, ret)
-            # show_wait_destroy('img', img)
-
-    # Camera calibration
-    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1][:2], None, None)
-
-    return mtx, dist  # Return camera matrix and distortion coefficients
-
-def save_calibration_data(camera_matrix, distortion_coefficients, filename='data/camera_calibration_data.pkl'):
-    with open(filename, 'wb') as f:
-        pickle.dump((camera_matrix, distortion_coefficients), f)
-        print(f"Calibration data saved to {filename}")
-
-def load_calibration_data(filename='data/camera_calibration_data.pkl'):
-    with open(filename, 'rb') as f:
-        camera_matrix, distortion_coefficients = pickle.load(f)
-    return camera_matrix, distortion_coefficients
-
-
 if __name__ == '__main__':
     # find_contour(2, 2)
     # host_x = "192.168.0.11"  # Server's IP address
