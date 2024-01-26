@@ -148,6 +148,6 @@ if __name__ == '__main__':
         # print(90 + angle2)
          
         # Ângulo entre camêras: 89° 
-        # controller.move(-89)
-        controller.construct_3d_model()
+        controller.move(-89)
+        # controller.construct_3d_model()
 

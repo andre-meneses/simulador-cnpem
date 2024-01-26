@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from collections import defaultdict
 
 class Tumour:
     def __init__(self, coordinates, center):
@@ -42,7 +43,7 @@ class Tumour:
         # y = self.coordinates[:,1]
         # z = self.coordinates[:,2]
 
-        self.coordinates = self.rotate_tumour(90)
+        # self.coordinates = self.rotate_tumour(90)
 
         x = self.coordinates[:,0]
         y = self.coordinates[:,1]
@@ -77,13 +78,26 @@ class Tumour:
         plt.show()
 
     def generate_slices(self):
-        sorted_points = self.coordinates[self.coordinates[:, 2].argsort()]
-        xy_pairs = sorted_points[:, [0, 1]]
-        z_values = sorted_points[:, 2]
-        transformed_list = [(xy_pairs[z_values == z], z) for z in np.unique(z_values)]
-        transformed_array = np.array([(pairs, z) for pairs,z in transformed_list], dtype=object)
+        ordered_points = sorted(self.coordinates, key=lambda xyz: (xyz[2], xyz[1], xyz[0]))
 
-        return transformed_array[::5]
+        slices = defaultdict(list)
+
+        for point in ordered_points:
+            slices[point[2]].append([point[0], point[1]])
+
+        # sorted_points = self.coordinates[self.coordinates[:, 2].argsort()]
+        # xy_pairs = sorted_points[:, [0, 1]]
+        # z_values = sorted_points[:, 2]
+        # transformed_list = [(xy_pairs[z_values == z], z) for z in np.unique(z_values)]
+        # transformed_array = np.array([(pairs, z) for pairs,z in transformed_list], dtype=object)
+
+        # for i, line in enumerate(transformed_array):
+            # transformed_array[i,0] = sorted(line[0], key=lambda xy: (xy[1], xy[0])) 
+            # print(transformed_array[i,0])
+        
+        # return np.array(transformed_array[::10])
+        return slices
+
 
 if __name__=="__main__":
 
@@ -92,4 +106,4 @@ if __name__=="__main__":
     tumor = Tumour(coords, center)
     # tumor.sanity_plot()
     tumor.generate_slices()
-    tumor.plot_slices()
+    # tumor.plot_slices()

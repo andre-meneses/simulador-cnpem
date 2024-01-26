@@ -16,9 +16,7 @@ import matplotlib.colors as mcolors
 from sklearn.linear_model import LinearRegression
 from teste import find_tumour
 from Goniometer import GoniometerController
-from scipy.interpolate import RegularGridInterpolator
-from scipy.interpolate import griddata
-from sklearn.preprocessing import PolynomialFeatures
+from Tumour import Tumour
  
 
 class LaserPainter:
@@ -584,7 +582,7 @@ class LaserPainter:
         vx = LinearRegression().fit(x_axis[:,0].reshape(-1,1), x_axis[:,1])
         vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
 
-        for x,y in tumour_coordinates[::2]:
+        for x,y in tumour_coordinates[::1]:
             # print(x)
             xPos = vx.predict(np.array(x).reshape(-1,1))
             yPos = vy.predict(np.array(y).reshape(-1,1))
@@ -605,18 +603,33 @@ class LaserPainter:
             self.compute_centroids()
 
     def burn_tumour(self, restart=True):
-        list_of_pixels, centroid_shift, image = find_tumour()
+        coords = np.load('data/coordinates.npy')
+        center = np.load('data/center.npy')
 
-        # for x, y in list_of_pixels:
-            # image[y, x] = [0, 0, 255]  # Set the pixel to red
+        tumour = Tumour(coords, center)
 
-        # cv2.imshow('Modified Image', image)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
-        # with GoniometerController() as controller:
+        with GoniometerController() as controller:
             # controller.move(89)
-            # self.paint_tumour(list_of_pixels, centroid_shift)
+
+            for i in range(10):
+                slices = tumour.generate_slices()
+
+                for key, value in slices.items():
+                    # print(len(slices))
+                    tumour_coordinates = np.array(value)
+                    x = tumour_coordinates[:,0]
+                    y = tumour_coordinates[:,1]
+                    print("x:", x)
+                    print("y:", y)
+                    print()
+                    # plt.plot(x,y)
+                    # plt.savefig(f"images/planos/plano_{i}_{j}")
+                    # plt.clf()
+                    # self.paint_tumour(tumour_coordinates, (130,65))
+
+                tumour.rotate_tumour(36)
+                # controller.move(36)
+
             # controller.move(-89)
 
 if __name__ == '__main__':
