@@ -11,20 +11,26 @@ class SilhouetteTo3D:
         self.points = []
         self.points_cloud = []
         self.coordinates = None
+        self.max_y = 0
+        self.max_x = 0
+        self.center = False
 
     def find_center(self, contour):
-        M = cv2.moments(contour)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            self.cx = cx
-            self.cy = cy
-        else:
-            self.cx = 0
-            self.cy = 0
+        if self.center == False:
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                self.cx = cx
+                self.cy = cy
+            else:
+                self.cx = 0
+                self.cy = 0
+            self.center = True
 
     def radius(self, point):
-        return point[0] - self.cx
+        # return np.sqrt((point[0] - self.cx)**2 + (point[1] - self.cy)**2)
+        return (point[0] - self.cx)
 
     def add_silhouette(self, contour, theta):
         x = []
@@ -33,12 +39,13 @@ class SilhouetteTo3D:
             self.find_center(contour)
             x = point[0][0]
             y = point[0][1]
-            self.points.append([self.radius(point[0]), np.deg2rad(theta), 186 - point[0][1]])
+
+            self.points.append([self.radius(point[0]), np.deg2rad(theta), 209 - point[0][1] - self.cy])
 
     def cyl2cart(self, point):
-        x = point[0] * np.cos(point[1]) 
+        x = point[0] * np.cos(point[1]) + self.cx 
         y = point[0] * np.sin(point[1]) 
-        z = point[2] 
+        z = point[2] + self.cy
 
         return [x,y,z]
          
@@ -63,11 +70,13 @@ class SilhouetteTo3D:
         cloud = pv.PolyData(np.array(self.points_cloud))
         surf = cloud.delaunay_3d()
         voxels = pv.voxelize(surf, check_surface=False)
-        self.coordinates = np.array(voxels.points)
+        coordinates = np.array(voxels.points)
+        self.coordinates = np.array([[x, y, z] for x,y,z in coordinates])
 
     def save_coordinates(self, filename='data/coordinates.npy'):
         # Save coordinates to the specified file
         np.save(filename, self.coordinates)
+        np.save('data/center.npy', [self.cx, self.cy])
 
     def load_coordinates(self, filename='data/coordinates.npy'):
         # Load coordinates from the specified file
@@ -117,7 +126,15 @@ if __name__ == "__main__":
         # print(i)
         s23.add_silhouette(contour, i)
     
+    # print(s23.max_x)
+    # print(s23.max_y)
     s23.convert_coordinates()
+    # max_values = np.max(s23.points_cloud, axis=0)
+    # min_values = np.min(s23.points_cloud, axis=0)
+
+    # Print the results
+    # print("Maximum values along each dimension:", max_values)
+    # print("Minimum values along each dimension:", min_values)
     s23.plot_shell()
     s23.generate_solid()
     s23.save_coordinates()

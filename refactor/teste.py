@@ -127,5 +127,6 @@ if __name__ == '__main__':
     
     # painter.load_calibration_data()
 
+    print(a)
     # find_tumour(painter)
 

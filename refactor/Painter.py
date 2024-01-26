@@ -614,10 +614,10 @@ class LaserPainter:
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
-        with GoniometerController() as controller:
-            controller.move(89)
-            self.paint_tumour(list_of_pixels, centroid_shift)
-            controller.move(-89)
+        # with GoniometerController() as controller:
+            # controller.move(89)
+            # self.paint_tumour(list_of_pixels, centroid_shift)
+            # controller.move(-89)
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
