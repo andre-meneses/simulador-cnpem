@@ -90,8 +90,8 @@ class LaserPainter:
         self.move('x', posX)
         self.move('y', posY)
 
-        self.laser_controller.switch_laser('on')
-        self.laser_controller.switch_laser('off')
+        # self.laser_controller.switch_laser('on')
+        # self.laser_controller.switch_laser('off')
 
     def paint_manually(self, stdscr):
         """
@@ -609,28 +609,37 @@ class LaserPainter:
         tumour = Tumour(coords, center)
 
         with GoniometerController() as controller:
-            # controller.move(89)
+            controller.move(89)
+            # tumour.rotate_tumour(180)
 
             for i in range(10):
                 slices = tumour.generate_slices()
 
+                j = 0
+
+                self.laser_controller.switch_laser('on')
+
                 for key, value in slices.items():
-                    # print(len(slices))
+
                     tumour_coordinates = np.array(value)
                     x = tumour_coordinates[:,0]
                     y = tumour_coordinates[:,1]
-                    print("x:", x)
-                    print("y:", y)
-                    print()
-                    # plt.plot(x,y)
-                    # plt.savefig(f"images/planos/plano_{i}_{j}")
-                    # plt.clf()
-                    # self.paint_tumour(tumour_coordinates, (130,65))
 
-                tumour.rotate_tumour(36)
-                # controller.move(36)
+                    plt.plot(x,y)
+                    plt.gca().invert_yaxis()
 
-            # controller.move(-89)
+                    plt.savefig(f"images/planos/plano_{i}_{j}")
+                    # plt.show()
+                    plt.clf()
+
+                    self.paint_tumour(tumour_coordinates, (130,65))
+                    j += 1
+
+                self.laser_controller.switch_laser('off')
+                tumour.rotate_tumour(-36)
+                controller.move(36)
+
+            controller.move(-89)
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
