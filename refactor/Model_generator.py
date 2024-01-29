@@ -113,12 +113,15 @@ class SilhouetteTo3D:
         plt.show()
 
 if __name__ == "__main__":
-
-    img_index = [i for i in range(180)] 
+    
+    img_index = [i for i in range(180)]
     image_folder = "images/reconstruction"
     images = [f'{image_folder}/angle_{i}.jpg' for i in img_index]
-    contours = [find_tumour(image)[3] for image in images]
-    contours = [max(contour, key=cv2.contourArea) for contour in contours]
+
+    processor = ImageProcessor(None)  # Initialize ImageProcessor with None image
+
+    # Find contours for each image and get the contour with maximum area
+    contours = [processor.find_tumour(image)[1] for image in images]
 
     s23 = SilhouetteTo3D() 
 
@@ -126,15 +129,8 @@ if __name__ == "__main__":
         # print(i)
         s23.add_silhouette(contour, i)
     
-    # print(s23.max_x)
-    # print(s23.max_y)
     s23.convert_coordinates()
-    # max_values = np.max(s23.points_cloud, axis=0)
-    # min_values = np.min(s23.points_cloud, axis=0)
 
-    # Print the results
-    # print("Maximum values along each dimension:", max_values)
-    # print("Minimum values along each dimension:", min_values)
     s23.plot_shell()
     s23.generate_solid()
     s23.save_coordinates()

@@ -123,12 +123,12 @@ class ImageProcessor:
             if not ret:
                 raise ValueError("Failed to capture image from camera")
         else:
-            image = cv.imread(image_path)
-            if image is None:
+            self.image = cv.imread(image_path)
+            if self.image is None:
                 raise FileNotFoundError(f"Image file not found at {image_path}")
 
-        # Crop region of interest
-        cropped_image = image[crop_top:crop_bottom, crop_left:crop_right]
+         # Crop region of interest
+        cropped_image = self.image[crop_top:crop_bottom, crop_left:crop_right]
 
         # Convert to grayscale
         grayscale = cv.cvtColor(cropped_image, cv.COLOR_BGR2GRAY)
@@ -142,17 +142,28 @@ class ImageProcessor:
         # Find contours
         contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-        # Find contour with greatest area
-        contour_with_max_area = max(contours, key=cv.contourArea)
+        # Create a blank mask
+        mask = np.zeros_like(thresh)
 
-        # Draw contour with greatest area on original image
-        cv.drawContours(cropped_image, [contour_with_max_area], -1, (255), thickness=cv.FILLED)
+        # Draw contours on the mask
+        cv.drawContours(mask, contours, -1, (255), thickness=cv.FILLED)
+
+        # Invert mask
+        mask = 255 - mask
+
+        # Find contours on inverted mask
+        inverted_contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+        # Draw contours on original image
+        cv.drawContours(cropped_image, inverted_contours, -1, (255), thickness=cv.FILLED)
+
+        max_area_contour = max(inverted_contours, key=cv.contourArea)
 
         # Show debug image if debug mode is enabled
         if debug:
             show_wait_destroy("Debug Image", cropped_image)
 
-        return cropped_image, contour_with_max_area
+        return cropped_image, max_area_contour
 
 # Example Usage
 if __name__ == "__main__":
