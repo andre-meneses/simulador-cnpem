@@ -3,7 +3,6 @@ import curses
 import numpy as np
 from Camera import Camera
 from Image_processor import ImageProcessor
-from teste import find_contour
 import time
 
 class GoniometerController:
@@ -14,6 +13,7 @@ class GoniometerController:
         self.port = port
         self.baud_rate = baud_rate
         self.ser = None
+        self.processor = ImageProcessor()
 
     def connect(self):
         self.ser = serial.Serial(self.port, self.baud_rate)
@@ -70,7 +70,7 @@ class GoniometerController:
 
         try:
             for i in range(50):
-                area = find_contour(i, camera)
+                area = self.processor.find_contour(i, camera)
                 angle_areas.append([angle, area])
                 self.move(self.MOVEMENT_INCREMENT)
                 print(i)
@@ -81,7 +81,7 @@ class GoniometerController:
             angle = 0
 
             for i in range(50):
-                area = find_contour(i * -1, camera)
+                area = self.processor.find_contour(i * -1, camera)
                 angle_areas.append([angle, area])
                 self.move(-self.MOVEMENT_INCREMENT)
                 print(i * -1)
