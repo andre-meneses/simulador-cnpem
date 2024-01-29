@@ -1,7 +1,6 @@
 import socket
 import os
 import cv2
-import itertools
 import outils
 import pickle
 import time
@@ -14,7 +13,6 @@ from Image_processor import ImageProcessor
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from sklearn.linear_model import LinearRegression
-from teste import find_tumour
 from Goniometer import GoniometerController
 from Tumour import Tumour
  
