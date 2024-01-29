@@ -4,27 +4,8 @@ import numpy as np
 from outils import show_wait_destroy
 
 class ImageProcessor:
-    def __init__(self, image):
-        # Assign the image directly
+    def __init__(self, image=None):
         self.image = image
-
-    def avg_green(self):
-        if self.image is None:
-            print("Error: Image not provided or loaded properly.")
-            return None
-
-        # Calculate the average of the green channel
-        average_green_value = np.mean(self.image[:, :, 1])
-        return average_green_value
-
-    def find_color(self, pixel, color=1):
-        if self.image is None:
-            print("Error: Image not provided or loaded properly.")
-            return None
-
-        pixel = (pixel[1], pixel[0])
-
-        # return self.image[*pixel, color]
 
     def compute_brightness(self, contour, enlarge_percent=100):
 
