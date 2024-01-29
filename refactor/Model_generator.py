@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from teste import find_tumour
 import pyvista as pv
-from teste import show_wait_destroy
+from outils import show_wait_destroy
+from Image_processor import ImageProcessor
 
 class SilhouetteTo3D:
     def __init__(self):
@@ -126,7 +126,6 @@ if __name__ == "__main__":
     s23 = SilhouetteTo3D() 
 
     for i,contour in enumerate(contours):
-        # print(i)
         s23.add_silhouette(contour, i)
     
     s23.convert_coordinates()
@@ -134,6 +133,5 @@ if __name__ == "__main__":
     s23.plot_shell()
     s23.generate_solid()
     s23.save_coordinates()
-    # s23.plot_cloud()
 
 
