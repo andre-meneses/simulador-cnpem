@@ -80,12 +80,8 @@ class LaserPainter:
 
     def paint_coordinate(self, posX, posY):
 
-        # print(posX)
-        # print(posY)
         posX = posX.item()
         posY = posY.item()
-
-        # print(type(posX))
 
         self.move('x', posX)
         self.move('y', posY)
@@ -185,39 +181,6 @@ class LaserPainter:
                 time.sleep(3)
         self.laser_controller.switch_laser('off')
 
-    def scan_area(self, center, n_points):
-        x_top_left = center[0] - 5 * self.x_calibration_factor
-        y_top_left = center[1] - 5 * self.y_calibration_factor
-
-        self.move('x', x_top_left)
-        self.move('y', y_top_left)
-
-        self.laser_controller.switch_laser('on')
-
-        # Calculate the step size for x and y movements
-        x_step = 10 * self.x_calibration_factor / n_points
-        y_step = 10 * self.y_calibration_factor / n_points
-
-        y = y_top_left
-        while y < y_top_left + 10 * self.y_calibration_factor:
-            self.move('y', y)
-            x = x_top_left
-            while x < x_top_left + 10 * self.x_calibration_factor:
-                self.move('x', x)
-                x += x_step
-            y += y_step
-
-        self.laser_controller.switch_laser('off')
-
-    def scan_grid(self):
-        for i in range(3):
-            for j in range(3):
-                x = self.calibration_grid[i,j,0]
-                y = self.calibration_grid[i,j,1]
-                self.scan_area((x,y), 100)
-                time.sleep(2)
-
-
     def scan_diagonal(self, center, n_points, coordinate, verbose=True):
 
         greenest_value = -10
@@ -226,7 +189,6 @@ class LaserPainter:
         camera = Camera(2)
 
         indexes = [2,3,4,5,6,7,8]
-
 
         # Calculate the step size for x and y movements
         x_step = 10 * self.x_calibration_factor / n_points
@@ -277,137 +239,7 @@ class LaserPainter:
             return (x_values.mean(), y_values.mean()), greenest_value
         else:
             return greenest_position, greenest_value
-
-
-    def scan_horizontal(self, center, n_points, coordinate, gv, gp, verbose=True):
-        x_top_left = center[0] - 5 * self.x_calibration_factor
-        y_top_left = center[1] 
-
-        greenest_value = gv
-        greenest_position = gp
-
-        camera = Camera(2)
-
-        self.laser_controller.switch_laser('on')
-
-        # Calculate the step size for x and y movements
-        x_step = 10 * self.x_calibration_factor / n_points
-        y_step = 10 * self.y_calibration_factor / n_points
-
-        y_values = [center[1] - 2.5*self.y_calibration_factor, center[1], center[1] + 2.5*self.y_calibration_factor]
-
-
-        for y in y_values:
-
-            self.move('y', y)
-            x = x_top_left
-
-            while x < x_top_left + 10 * self.x_calibration_factor:
-                self.move('x', x)
-
-                processor = ImageProcessor(camera.take_picture(return_image=True))
-                # green = processor.avg_green()
-
-                green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
-
-                self.whole_green_map.append([x,y,green])
-
-                if green == 255:
-                    self.green_map.append([x,y,green])
-
-                if green > greenest_value:
-                    greenest_value = green
-                    greenest_position = (x,y)
-                    # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
-                x += x_step
-
-        self.laser_controller.switch_laser('off')
-
-        if verbose:
-            print(f"Greenest value:{greenest_value}")
-            print(f"Greenest position:{greenest_position}")
-
-        return greenest_position, greenest_value
-
-    def scan_vertical(self, center, n_points, coordinate, gv, gp, verbose=True):
-        x_top_left = center[0]
-        y_top_left = center[1] - 5 * self.y_calibration_factor
-
-        greenest_value = gv
-        greenest_position = gp
-
-        camera = Camera(2)
-
-        self.laser_controller.switch_laser('on')
-
-        # Calculate the step size for x and y movements
-        y_step = 10 * self.y_calibration_factor / n_points
-
-        greens = []
-
-        x_values = [center[0] - 2.5*self.x_calibration_factor, center[0], center[0] + 2.5*self.x_calibration_factor]
-
-        for x in x_values: 
-
-            self.move('x', x)
-            y = y_top_left
-
-            while y < y_top_left + 10 * self.y_calibration_factor:
-                self.move('y', y)
-
-                processor = ImageProcessor(camera.take_picture(return_image=True))
-                # green = processor.avg_green()
-                green = processor.compute_brightness(self.contours[3*coordinate[0] + coordinate[1]])
-
-                self.whole_green_map.append([x,y,green])
-                if green >= 254:
-                    self.green_map.append([x,y,green])
-
-                # greens.append([y,green])
-
-                # plt.plot(greens)
-                # plt.show()
-
-                if green > greenest_value:
-                    greenest_value = green
-                    greenest_position = (x,y)
-                    # camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
-                y += y_step
-
-        self.laser_controller.switch_laser('off')
-
-        if verbose:
-            print(f"Greenest value:{greenest_value}")
-            print(f"Greenest position:{greenest_position}")
-
-        return greenest_position, greenest_value 
-
-    def fine_tune_calibration(self):
-        for i in range(3):
-            for j in range(3):
-                x = self.calibration_grid[i,j,0]
-                y = self.calibration_grid[i,j,1]
-                pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
-                self.scan_calibration(pos_1, 10, (i,j))
-                # pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
-                # pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
-
-                array = np.array(self.green_map)
-
-                x_values = np.array([coord[0] for coord in array])
-                y_values = np.array([coord[1] for coord in array])
-
-                self.fine_grid[i,j,0] = np.mean(x_values)
-                self.fine_grid[i,j,1] = np.mean(y_values)
-                # self.plot_green_map(f"point_{i},{j}")
-
-                print(f"Green map: {self.green_map}")
-                print(f"Fine_grid: {self.fine_grid[i,j]}")
-                print()
-                self.green_map = []
-                time.sleep(2)
-
-
+    
     def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15, mb=-10):
         x_top_left = center[0] - (line/2) * self.x_calibration_factor
         y_top_left = center[1] - (line/2) * self.y_calibration_factor
@@ -467,6 +299,31 @@ class LaserPainter:
 
         self.laser_controller.switch_laser('off')
         return max_brght
+
+    def fine_tune_calibration(self):
+        for i in range(3):
+            for j in range(3):
+                x = self.calibration_grid[i,j,0]
+                y = self.calibration_grid[i,j,1]
+                pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
+                self.scan_calibration(pos_1, 10, (i,j))
+                # pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
+                # pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
+
+                array = np.array(self.green_map)
+
+                x_values = np.array([coord[0] for coord in array])
+                y_values = np.array([coord[1] for coord in array])
+
+                self.fine_grid[i,j,0] = np.mean(x_values)
+                self.fine_grid[i,j,1] = np.mean(y_values)
+                # self.plot_green_map(f"point_{i},{j}")
+
+                print(f"Green map: {self.green_map}")
+                print(f"Fine_grid: {self.fine_grid[i,j]}")
+                print()
+                self.green_map = []
+                time.sleep(2)
    
     def plot_green_map(self, name):
         """
@@ -570,12 +427,9 @@ class LaserPainter:
 
         for pxs, volts in zip(centroids, voltages):
             for px,volt in zip(pxs, volts):
-                # print(px)
-                # print(volt)
                 x_axis.append([px[0], volt[0]])
                 y_axis.append([px[1], volt[1]])
 
-        # print(x_axis)
         x_axis = np.array(x_axis)
         y_axis = np.array(y_axis)
 
@@ -583,11 +437,8 @@ class LaserPainter:
         vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
 
         for x,y in tumour_coordinates[::1]:
-            # print(x)
             xPos = vx.predict(np.array(x).reshape(-1,1))
             yPos = vy.predict(np.array(y).reshape(-1,1))
-
-            # print(xPos)
 
             self.paint_coordinate(xPos[0],yPos[0])
 
@@ -602,22 +453,23 @@ class LaserPainter:
             controller.move(-89)
             self.compute_centroids()
 
-    def burn_tumour(self, restart=True):
+    def burn_tumour(self, static=False):
         coords = np.load('data/coordinates.npy')
         center = np.load('data/center.npy')
 
         tumour = Tumour(coords, center)
 
         with GoniometerController() as controller:
-            controller.move(89)
-            # tumour.rotate_tumour(180)
+            if not static:
+                controller.move(89)
 
             for i in range(10):
                 slices = tumour.generate_slices()
 
                 j = 0
 
-                self.laser_controller.switch_laser('on')
+                if not static:
+                    self.laser_controller.switch_laser('on')
 
                 for key, value in slices.items():
 
@@ -632,14 +484,18 @@ class LaserPainter:
                     # plt.show()
                     plt.clf()
 
-                    self.paint_tumour(tumour_coordinates, (130,65))
+                    if not static:
+                        self.paint_tumour(tumour_coordinates, (130,65))
                     j += 1
 
-                self.laser_controller.switch_laser('off')
                 tumour.rotate_tumour(-36)
-                controller.move(36)
+                
+                if not static:
+                    self.laser_controller.switch_laser('off')
+                    controller.move(36)
 
-            controller.move(-89)
+            if not static:
+                controller.move(-89)
 
 if __name__ == '__main__':
     host_x = "192.168.0.11"  # Server's IP address
