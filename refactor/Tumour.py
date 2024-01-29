@@ -46,12 +46,12 @@ class Tumour:
         z = self.coordinates[:,2]
 
         fig = plt.figure()
+
         # Add a 3D subplot
         ax = fig.add_subplot(111, projection='3d')
         ax.set_xlabel('X-axis')
         ax.set_ylabel('Y-axis')
         ax.set_zlabel('Z-axis')
-        # Scatter plot
 
         ax.plot(x,y,z)
         plt.show()
@@ -65,13 +65,10 @@ class Tumour:
         i = 0
 
         for key,item in transformed_list.items():
-            # print(pairs)
-            # if i % 20 == 0:
+
             x = [it[0] for it in item]
             y = [it[1] for it in item]
             ax.scatter(x, y, np.full_like(x,int(key)))
-
-            # i += 1
 
         ax.set_xlabel('X-axis')
         ax.set_ylabel('Y-axis')
