@@ -1,12 +1,12 @@
 import cv2 as cv
 import outils
 import numpy as np
+from outils import show_wait_destroy
 
 class ImageProcessor:
     def __init__(self, image):
         # Assign the image directly
         self.image = image
-        self.white_rectangle = None
 
     def avg_green(self):
         if self.image is None:
@@ -25,15 +25,6 @@ class ImageProcessor:
         pixel = (pixel[1], pixel[0])
 
         # return self.image[*pixel, color]
-
-    def compute_whole_brightness(self):
-        gray_cropped = cv.cvtColor(self.image, cv.COLOR_BGR2GRAY)
-
-    def show_wait_destroy(self,winname, img):
-        cv.imshow(winname, img)
-        cv.moveWindow(winname, 500, 0)
-        cv.waitKey(0)
-        cv.destroyWindow(winname)
 
     def compute_brightness(self, contour, enlarge_percent=100):
 
@@ -63,7 +54,6 @@ class ImageProcessor:
         total_brightness = cropped_image[:,:,1].mean()
 
         cv.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        # self.show_wait_destroy("rect", image)
 
         return total_brightness
     
@@ -96,46 +86,82 @@ class ImageProcessor:
 
         return centroids
 
-    def find_contour(self):
-        img = self.image[36:471, 110:530]
+    def find_contour(self, index, camera_number, crop_params=(125, 250, 150, 480)):
+        camera = Camera(camera_number)
+        img = camera.take_picture(return_image=True)[crop_params[0]:crop_params[1], crop_params[2]:crop_params[3]]
 
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img_gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-        blurred = cv2.GaussianBlur(img_gray, (5, 5), 0)
+        blurred = cv.GaussianBlur(img_gray, (5, 5), 0)
 
-        ret, thresh = cv2.threshold(blurred, 100, 255, cv2.THRESH_BINARY)
+        ret, thresh = cv.threshold(blurred, 120, 255, cv.THRESH_BINARY)
 
-        contours, hierarchy = cv2.findContours(image=thresh, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+        contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
+
+        # Draw contours on the original image
+        image_copy = img.copy()
+        cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
 
         area = 0
 
         for contour in contours:
-            area += cv2.contourArea(contour)
+            area += cv.contourArea(contour)
+
+        # Save the results
+        cv.imwrite(f"images/contours_teste/camera_{camera_number}_{index}.jpg", image_copy)
 
         return area
 
-        # draw contours on the original image
-        # image_copy = img.copy()
-        # cv2.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv2.LINE_AA)
+    def find_tumour(self,image_path=None, crop_params=(65, 275, 130, 500), debug=False):
+        crop_top, crop_bottom, crop_left, crop_right = crop_params
 
-        # see the results
-        # cv2.imshow('None approximation', image_copy)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        # Load image if provided, otherwise capture from camera
+        if image_path is None:
+            camera = cv.VideoCapture(0)
+            ret, image = camera.read()
+            camera.release()
+            if not ret:
+                raise ValueError("Failed to capture image from camera")
+        else:
+            image = cv.imread(image_path)
+            if image is None:
+                raise FileNotFoundError(f"Image file not found at {image_path}")
 
+        # Crop region of interest
+        cropped_image = image[crop_top:crop_bottom, crop_left:crop_right]
+
+        # Convert to grayscale
+        grayscale = cv.cvtColor(cropped_image, cv.COLOR_BGR2GRAY)
+
+        # Apply Gaussian blur
+        blurred = cv.GaussianBlur(grayscale, (5, 5), 0)
+
+        # Thresholding
+        _, thresh = cv.threshold(blurred, 120, 255, cv.THRESH_BINARY)
+
+        # Find contours
+        contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+        # Find contour with greatest area
+        contour_with_max_area = max(contours, key=cv.contourArea)
+
+        # Draw contour with greatest area on original image
+        cv.drawContours(cropped_image, [contour_with_max_area], -1, (255), thickness=cv.FILLED)
+
+        # Show debug image if debug mode is enabled
+        if debug:
+            show_wait_destroy("Debug Image", cropped_image)
+
+        return cropped_image, contour_with_max_area
 
 # Example Usage
 if __name__ == "__main__":
     # image = cv.imread("images/test/captured_image_2.jpg")
     image = cv.imread("images/centroids/marked_centroids.jpg")
     ip = ImageProcessor(image)
-    ip.show_wait_destroy('centroid', image)
-
-    # avg_green_value = image_processor.avg_green()
-    # if avg_green_value is not None:
-        # print(f"Average green value: {avg_green_value}")
 
     centroids = image_processor.centroids("images/centroids/marked_centroids.jpg")
+
     if centroids:
         print("centroids:", outils.sort_centroids(centroids))
     else:
