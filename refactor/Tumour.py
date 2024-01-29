@@ -41,13 +41,6 @@ class Tumour:
 
 
     def sanity_plot(self):
-
-        # x = self.coordinates[:,0]
-        # y = self.coordinates[:,1]
-        # z = self.coordinates[:,2]
-
-        # self.coordinates = self.rotate_tumour(90)
-
         x = self.coordinates[:,0]
         y = self.coordinates[:,1]
         z = self.coordinates[:,2]
@@ -85,46 +78,7 @@ class Tumour:
         ax.set_zlabel('Z-axis')
         ax.legend()
         plt.show()
-
-    # def generate_slices(self):
-        # ordered_points = sorted(self.coordinates, key=lambda xyz: (xyz[2], xyz[1], xyz[0]))
-
-        # slices = defaultdict(list)
-
-        # for point in ordered_points:
-            # slices[point[2]].append([point[0], point[1]])
-
-        # sorted_points = self.coordinates[self.coordinates[:, 2].argsort()]
-        # xy_pairs = sorted_points[:, [0, 1]]
-        # z_values = sorted_points[:, 2]
-        # transformed_list = [(xy_pairs[z_values == z], z) for z in np.unique(z_values)]
-        # transformed_array = np.array([(pairs, z) for pairs,z in transformed_list], dtype=object)
-
-        # for i, line in enumerate(transformed_array):
-            # transformed_array[i,0] = sorted(line[0], key=lambda xy: (xy[1], xy[0])) 
-            # print(transformed_array[i,0])
-        
-        # return np.array(transformed_array[::10])
-        # return slices
-
-    # def generate_slices(self, tolerance=0.1):
-    #     ordered_points = sorted(self.coordinates, key=lambda xyz: (xyz[2], xyz[1], xyz[0]))
-
-    #     slices = defaultdict(list)
-    #     current_plane = []
-
-    #     for point in ordered_points:
-    #         if not current_plane or abs(point[2] - current_plane[0][2]) < tolerance:
-    #             current_plane.append(point)
-    #         else:
-    #             slices[current_plane[0][2]].extend(current_plane)
-    #             current_plane = [point]
-
-    #     if current_plane:
-    #         slices[current_plane[0][2]].extend(current_plane)
-
-    #     return slices
-
+    
     def generate_slices(self, num_slices = 15, tolerance=20):
         ordered_points = sorted(self.coordinates, key=lambda xyz: (xyz[2], xyz[1], xyz[0]))
 
