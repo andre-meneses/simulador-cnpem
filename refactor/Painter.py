@@ -440,12 +440,18 @@ class LaserPainter:
 
             self.paint_coordinate(xPos[0],yPos[0])
 
-    def calibration_routine(self):
-
+    def calibration_routine(self, manual=False):
         with GoniometerController() as controller:
             controller.calibrate_coordinates(0)
+
             self.compute_centroids(camera_number=2)
-            self.load_calibration_data()
+
+            if manual:
+                curses.wrapper(painter.paint_manually)
+                painter.interpolate_calibration_grid(verbose=True)
+            else:
+                self.load_calibration_data()
+
             self.fine_tune_calibration()
             self.save_calibration_data()
             controller.move(-89)
