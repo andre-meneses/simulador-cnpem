@@ -125,7 +125,7 @@ class ImageProcessor:
         for contour in contours:
             area += cv.contourArea(contour)
 
-        cv.imwrite(f"images/contours_teste/camera_{camera_number}_{index}.jpg", image_copy)
+        cv.imwrite(f"images/contours/camera_{camera_number}_{index}.jpg", image_copy)
 
         return area
 
