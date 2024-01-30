@@ -64,6 +64,7 @@ class LaserPainter:
 
         self.contours = None
         self.centroids = np.zeros((3,3,2))
+        self.centroid_shift = None
 
     def move(self, axis, position):
         """
@@ -516,7 +517,7 @@ class LaserPainter:
             controller.move(-89)
             self.compute_centroids()
 
-    def burn_tumour(self, static=False):
+    def burn_tumour(self, static=False, angle_per_step=36):
         """
         Burns the tumor.
 
@@ -535,7 +536,9 @@ class LaserPainter:
             if not static:
                 controller.move(89)
 
-            for i in range(10):
+            steps = 360/angle_per_step
+
+            for i in range(steps):
                 slices = tumour.generate_slices()
 
                 j = 0
@@ -559,11 +562,11 @@ class LaserPainter:
                         self.paint_tumour(tumour_coordinates, (130, 65))
                     j += 1
 
-                tumour.rotate_tumour(-36)
+                tumour.rotate_tumour(-1*angle_per_step)
 
                 if not static:
                     self.laser_controller.switch_laser('off')
-                    controller.move(36)
+                    controller.move(angle_per_step)
 
             if not static:
                 controller.move(-89)
