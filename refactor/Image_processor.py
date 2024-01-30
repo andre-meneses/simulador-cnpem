@@ -4,11 +4,30 @@ import numpy as np
 from outils import show_wait_destroy
 
 class ImageProcessor:
+    """
+    A class for processing images and extracting features.
+    """
+
     def __init__(self, image=None):
+        """
+        Initialize the ImageProcessor with an image.
+
+        Args:
+            image (numpy.ndarray, optional): The input image. Defaults to None.
+        """
         self.image = image
 
     def compute_brightness(self, contour, enlarge_percent=100):
+        """
+        Compute the brightness of a region specified by a contour.
 
+        Args:
+            contour (numpy.ndarray): Contour specifying the region of interest.
+            enlarge_percent (int, optional): Percentage to enlarge the bounding rectangle. Defaults to 100.
+
+        Returns:
+            float: The total brightness of the region.
+        """
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
             return None
@@ -39,6 +58,15 @@ class ImageProcessor:
         return total_brightness
     
     def centroids(self, save_path="marked_image.jpg"):
+        """
+        Find centroids of objects in the image and mark them.
+
+        Args:
+            save_path (str, optional): Path to save the marked image. Defaults to "marked_image.jpg".
+
+        Returns:
+            list: List of centroids coordinates.
+        """
         if self.image is None:
             print("Error: Image not provided or loaded properly.")
             return None
@@ -60,7 +88,6 @@ class ImageProcessor:
                 centroids.append([cx, cy, contour])
                 cv.drawContours(self.image, [contour], -1, (0, 255, 0), 2)
                 cv.circle(self.image, (cx, cy), 4, (0, 0, 255), -1)
-                # print(f"x: {cx} y: {cy}")
 
         # Save the modified image with centroids and contours marked
         cv.imwrite(save_path, self.image)
@@ -68,6 +95,17 @@ class ImageProcessor:
         return centroids
 
     def find_contour(self, index, camera_number, crop_params=(125, 250, 150, 480)):
+        """
+        Find contours in an image captured by a camera.
+
+        Args:
+            index (int): Index of the image.
+            camera_number (int): Number of the camera.
+            crop_params (tuple, optional): Parameters for cropping the image. Defaults to (125, 250, 150, 480).
+
+        Returns:
+            float: Total area of the contours found.
+        """
         camera = Camera(camera_number)
         img = camera.take_picture(return_image=True)[crop_params[0]:crop_params[1], crop_params[2]:crop_params[3]]
 
@@ -79,7 +117,6 @@ class ImageProcessor:
 
         contours, hierarchy = cv.findContours(image=thresh, mode=cv.RETR_TREE, method=cv.CHAIN_APPROX_SIMPLE)
 
-        # Draw contours on the original image
         image_copy = img.copy()
         cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
 
@@ -88,15 +125,24 @@ class ImageProcessor:
         for contour in contours:
             area += cv.contourArea(contour)
 
-        # Save the results
         cv.imwrite(f"images/contours_teste/camera_{camera_number}_{index}.jpg", image_copy)
 
         return area
 
     def find_tumour(self,image_path=None, crop_params=(65, 275, 130, 500), debug=False):
+        """
+        Find tumor in the image.
+
+        Args:
+            image_path (str, optional): Path to the image file. Defaults to None.
+            crop_params (tuple, optional): Parameters for cropping the image. Defaults to (65, 275, 130, 500).
+            debug (bool, optional): Whether to show debug image. Defaults to False.
+
+        Returns:
+            tuple: Cropped image with tumor and the contour of the tumor.
+        """
         crop_top, crop_bottom, crop_left, crop_right = crop_params
 
-        # Load image if provided, otherwise capture from camera
         if image_path is None:
             camera = cv.VideoCapture(0)
             ret, image = camera.read()
@@ -108,39 +154,24 @@ class ImageProcessor:
             if self.image is None:
                 raise FileNotFoundError(f"Image file not found at {image_path}")
 
-         # Crop region of interest
         cropped_image = self.image[crop_top:crop_bottom, crop_left:crop_right]
 
-        # Convert to grayscale
         grayscale = cv.cvtColor(cropped_image, cv.COLOR_BGR2GRAY)
 
-        # Apply Gaussian blur
         blurred = cv.GaussianBlur(grayscale, (5, 5), 0)
 
-        # Thresholding
         _, thresh = cv.threshold(blurred, 120, 255, cv.THRESH_BINARY)
 
-        # Find contours
         contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-        # Create a blank mask
         mask = np.zeros_like(thresh)
-
-        # Draw contours on the mask
         cv.drawContours(mask, contours, -1, (255), thickness=cv.FILLED)
-
-        # Invert mask
         mask = 255 - mask
-
-        # Find contours on inverted mask
         inverted_contours, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-        # Draw contours on original image
         cv.drawContours(cropped_image, inverted_contours, -1, (255), thickness=cv.FILLED)
 
         max_area_contour = max(inverted_contours, key=cv.contourArea)
 
-        # Show debug image if debug mode is enabled
         if debug:
             show_wait_destroy("Debug Image", cropped_image)
 
