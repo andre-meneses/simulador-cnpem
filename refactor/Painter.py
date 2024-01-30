@@ -15,12 +15,13 @@ import matplotlib.colors as mcolors
 from sklearn.linear_model import LinearRegression
 from Goniometer import GoniometerController
 from Tumour import Tumour
+from Socket_connection import SocketConnection
  
 
 class LaserPainter:
     """
     Class to control a laser painter device, capable of moving along X and Y axes,
-    and controlling a laser for drawing or painting.
+    and controlling a laser for burning the tumour. 
 
     Attributes:
         x_socket (socket.socket): Socket for controlling the X-axis.
@@ -58,8 +59,8 @@ class LaserPainter:
         self.green_map = []
         self.whole_green_map = []
 
-        self.x_socket.sendall(b'UPMODE:NORMAL\r\n')
-        self.y_socket.sendall(b'UPMODE:NORMAL\r\n')
+        self.x_socket.send_data('UPMODE:NORMAL\r\n')
+        self.y_socket.send_data('UPMODE:NORMAL\r\n')
 
         self.contours = None
         self.centroids = np.zeros((3,3,2))
@@ -72,8 +73,8 @@ class LaserPainter:
             axis (str): The axis along which to move ('x' or 'y').
             position (float): The position to move to.
         """
-        command = f"MWV:{position}\r\n".encode('utf-8')
-        (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
+        command = f"MWV:{position}\r\n"
+        (self.x_socket if axis == 'x' else self.y_socket).send_data(command)
 
     def paint_coordinate(self, posX, posY):
         """
@@ -92,7 +93,7 @@ class LaserPainter:
         # self.laser_controller.switch_laser('on')
         # self.laser_controller.switch_laser('off')
 
-    def paint_manually(self, stdscr):
+    def set_laser_grid(self, stdscr):
         """
         Allows manual painting using keyboard controls in a curses window.
 
@@ -338,8 +339,6 @@ class LaserPainter:
                 y = self.calibration_grid[i,j,1]
                 pos_1, gv1 = self.scan_diagonal((x,y), 10, (i,j))
                 self.scan_calibration(pos_1, 10, (i,j))
-                # pos_2, gv2 = self.scan_horizontal((x,pos_1[1]), 10, (i,j), gv1, pos_1)
-                # pos_3, gv3 = self.scan_vertical((pos_2[0],y), 10, (i,j), gv2, pos_2)
 
                 array = np.array(self.green_map)
 
@@ -348,7 +347,6 @@ class LaserPainter:
 
                 self.fine_grid[i,j,0] = np.mean(x_values)
                 self.fine_grid[i,j,1] = np.mean(y_values)
-                # self.plot_green_map(f"point_{i},{j}")
 
                 print(f"Green map: {self.green_map}")
                 print(f"Fine_grid: {self.fine_grid[i,j]}")
@@ -423,7 +421,7 @@ class LaserPainter:
                 try:
                     with open('data/centroids_data.pkl', 'rb') as file:
                         self.centroids = pickle.load(file)
-                    print("Loaded centroids from file.")
+                    # print("Loaded centroids from file.")
                 except (FileNotFoundError, EOFError):
                     print("File not found or empty. Computing centroids instead.")
                     use_saved_data = False
@@ -508,7 +506,7 @@ class LaserPainter:
             self.compute_centroids(camera_number=2)
 
             if manual:
-                curses.wrapper(painter.paint_manually)
+                curses.wrapper(painter.set_laser_grid)
                 painter.interpolate_calibration_grid(verbose=True)
             else:
                 self.load_calibration_data()
@@ -576,12 +574,14 @@ if __name__ == '__main__':
 
     port = 10001  # Port used by the server
 
-    socket_x = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket_y = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Create SocketConnection instances
+    socket_x = SocketConnection(host_x, port)
+    socket_y = SocketConnection(host_y, port)
 
     try:
-        socket_x.connect((host_x, port))
-        socket_y.connect((host_y, port))
+        # Connect to the sockets
+        socket_x.connect()
+        socket_y.connect()
     except socket.error as e:
         print(f"Error connecting to socket: {e}")
 
