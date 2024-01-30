@@ -100,27 +100,6 @@ class SilhouetteTo3D:
             voxels = pv.voxelize(surf, check_surface=False)
             voxels.plot()
 
-    def plot_slices(self):
-        """Plot slices of the 3D object."""
-        sorted_points = self.coordinates[self.coordinates[:, 1].argsort()]
-        y_values = sorted_points[:, 1]
-        xz_pairs = sorted_points[:, [0, 2]]
-        transformed_list = [(y, xz_pairs[y_values == y]) for y in np.unique(y_values)]
-        transformed_array = np.array([(y, pairs) for y, pairs in transformed_list], dtype=object)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        for y, pairs in transformed_list[::5]:
-            x, z = pairs.T
-            ax.scatter(x, np.full_like(x, y), z, label=f"y = {y}")
-
-        ax.set_xlabel('X-axis')
-        ax.set_ylabel('Y-axis')
-        ax.set_zlabel('Z-axis')
-        ax.legend()
-        plt.show()
-
 if __name__ == "__main__":
     
     img_index = [i for i in range(180)]
