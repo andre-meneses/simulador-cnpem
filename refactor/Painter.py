@@ -64,7 +64,6 @@ class LaserPainter:
         self.contours = None
         self.centroids = np.zeros((3,3,2))
 
-
     def move(self, axis, position):
         """
         Moves the laser painter along the specified axis to the given position.
@@ -77,7 +76,13 @@ class LaserPainter:
         (self.x_socket if axis == 'x' else self.y_socket).sendall(command)
 
     def paint_coordinate(self, posX, posY):
+        """
+        Moves the laser to the specified coordinate and activates the laser for painting.
 
+        Args:
+            posX (float): X-coordinate to paint.
+            posY (float): Y-coordinate to paint.
+        """
         posX = posX.item()
         posY = posY.item()
 
@@ -180,7 +185,18 @@ class LaserPainter:
         self.laser_controller.switch_laser('off')
 
     def scan_diagonal(self, center, n_points, coordinate, verbose=True):
+        """
+        Scans the diagonal area around a given center point.
 
+        Args:
+            center (tuple): Center coordinates to start the scan from.
+            n_points (int): Number of points to scan along the diagonal.
+            coordinate (tuple): Coordinates of the point being scanned.
+            verbose (bool): If True, prints scan results.
+
+        Returns:
+            tuple: A tuple containing the greenest position and its brightness value.
+        """
         greenest_value = -10
         greenest_position = (0,0)
 
@@ -239,6 +255,20 @@ class LaserPainter:
             return greenest_position, greenest_value
     
     def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15, mb=-10):
+        """
+        Scans a calibration area around a given center point.
+
+        Args:
+            center (tuple): Center coordinates to start the scan from.
+            n_points (int): Number of points to scan along each axis.
+            coordinate (tuple): Coordinates of the point being scanned.
+            verbose (bool): If True, prints scan results.
+            line (int): Length of the square area to scan.
+            mb (int): Initial maximum brightness value.
+
+        Returns:
+            int: Maximum brightness value found during the scan.
+        """
         x_top_left = center[0] - (line/2) * self.x_calibration_factor
         y_top_left = center[1] - (line/2) * self.y_calibration_factor
 
@@ -299,6 +329,9 @@ class LaserPainter:
         return max_brght
 
     def fine_tune_calibration(self):
+        """
+        Fine tunes the calibration by scanning diagonals and calibration areas for each grid point.
+        """
         for i in range(3):
             for j in range(3):
                 x = self.calibration_grid[i,j,0]
@@ -326,7 +359,11 @@ class LaserPainter:
     def plot_green_map(self, name):
         """
         Plots the green_map data as a color map.
+
+        Args:
+            name (str): Name of the file to save the plot.
         """
+
         if not self.green_map:
             print("Green map is empty. No data to plot.")
             return
@@ -347,7 +384,6 @@ class LaserPainter:
         plt.title('Green Map Color Plot')
         plt.savefig(f"{name}", format=pdf)
         # plt.show()
-
 
     def save_calibration_data(self, filename="data/calibration_data.pkl"):
         """
@@ -372,6 +408,16 @@ class LaserPainter:
             self.fine_grid = data['fine_grid']
 
     def compute_centroids(self, use_saved_data=False, camera_number=0):
+        """
+        Computes centroids of marked points in an image.
+
+        Args:
+        - use_saved_data (bool): Whether to use saved centroid data.
+        - camera_number (int): The camera number.
+
+        Returns:
+        - None
+        """
         if camera_number == 0:
             if use_saved_data:
                 try:
@@ -385,29 +431,35 @@ class LaserPainter:
             if not use_saved_data:
                 camera = Camera(0)
                 image = camera.take_picture(return_image=True)
-                # image = cv2.imread("images/centroids/marked_centroids.jpg")
                 image_processor = ImageProcessor(image)
                 centroids = image_processor.centroids(f"images/centroids/marked_centroids_image_{camera_number}.jpg")
                 self.centroids, self.contours = outils.sort_centroids(centroids)
 
-                # Save centroids using pickle
                 if not os.path.exists('data'):
                     os.makedirs('data')
                 with open('data/centroids_data.pkl', 'wb') as file:
                     pickle.dump(self.centroids, file)
-                print("Computed and saved centroids.")
+                # print("Computed and saved centroids.")
 
         else:
-            camera = Camera(2) 
+            camera = Camera(2)
             image = camera.take_picture(return_image=True)
-            # image = cv2.imread("images/centroids/marked_centroids.jpg")
             image_processor = ImageProcessor(image)
             centroids = image_processor.centroids(f"images/centroids/marked_centroids_image_{camera_number}.jpg")
             self.centroids, self.contours = outils.sort_centroids(centroids)
             print("Computed centroids camera 2")
 
-
     def paint_tumour(self, tumour_coordinates, centroid_shift):
+        """
+        Paints the tumor on the image.
+
+        Args:
+        - tumour_coordinates (array): Array of tumor coordinates.
+        - centroid_shift (tuple): Shift of the centroid.
+
+        Returns:
+        - None
+        """
         x_axis = []
         y_axis = []
 
@@ -424,23 +476,32 @@ class LaserPainter:
                 center[1] -= centroid_shift[1]
 
         for pxs, volts in zip(centroids, voltages):
-            for px,volt in zip(pxs, volts):
+            for px, volt in zip(pxs, volts):
                 x_axis.append([px[0], volt[0]])
                 y_axis.append([px[1], volt[1]])
 
         x_axis = np.array(x_axis)
         y_axis = np.array(y_axis)
 
-        vx = LinearRegression().fit(x_axis[:,0].reshape(-1,1), x_axis[:,1])
-        vy = LinearRegression().fit(y_axis[:,0].reshape(-1,1), y_axis[:,1])
+        vx = LinearRegression().fit(x_axis[:, 0].reshape(-1, 1), x_axis[:, 1])
+        vy = LinearRegression().fit(y_axis[:, 0].reshape(-1, 1), y_axis[:, 1])
 
-        for x,y in tumour_coordinates[::1]:
-            xPos = vx.predict(np.array(x).reshape(-1,1))
-            yPos = vy.predict(np.array(y).reshape(-1,1))
+        for x, y in tumour_coordinates[::1]:
+            xPos = vx.predict(np.array(x).reshape(-1, 1))
+            yPos = vy.predict(np.array(y).reshape(-1, 1))
 
-            self.paint_coordinate(xPos[0],yPos[0])
+            self.paint_coordinate(xPos[0], yPos[0])
 
     def calibration_routine(self, manual=False):
+        """
+        Performs calibration routine.
+
+        Args:
+        - manual (bool): Whether to calibrate manually.
+
+        Returns:
+        - None
+        """
         with GoniometerController() as controller:
             controller.calibrate_coordinates(0)
 
@@ -458,6 +519,15 @@ class LaserPainter:
             self.compute_centroids()
 
     def burn_tumour(self, static=False):
+        """
+        Burns the tumor.
+
+        Args:
+        - static (bool): Whether the tumor is static.
+
+        Returns:
+        - None
+        """
         coords = np.load('data/coordinates.npy')
         center = np.load('data/center.npy')
 
@@ -478,22 +548,21 @@ class LaserPainter:
                 for key, value in slices.items():
 
                     tumour_coordinates = np.array(value)
-                    x = tumour_coordinates[:,0]
-                    y = tumour_coordinates[:,1]
+                    x = tumour_coordinates[:, 0]
+                    y = tumour_coordinates[:, 1]
 
-                    plt.plot(x,y)
+                    plt.plot(x, y)
                     plt.gca().invert_yaxis()
 
                     plt.savefig(f"images/planos/plano_{i}_{j}")
-                    # plt.show()
                     plt.clf()
 
                     if not static:
-                        self.paint_tumour(tumour_coordinates, (130,65))
+                        self.paint_tumour(tumour_coordinates, (130, 65))
                     j += 1
 
                 tumour.rotate_tumour(-36)
-                
+
                 if not static:
                     self.laser_controller.switch_laser('off')
                     controller.move(36)
@@ -523,30 +592,8 @@ if __name__ == '__main__':
     painter = LaserPainter(socket_x, socket_y, calx, caly, mcp)  # Adjust as needed
 
     # painter.calibration_routine()
-    painter.burn_tumour()
-
-    # curses.wrapper(painter.paint_manually)
-    # painter.interpolate_calibration_grid(verbose=True)
-    # time.sleep(10)
-    # painter.scan_grid()
     # painter.run_calibration_test()
-    # time.sleep(5)
-    # painter.fine_tune_calibration()
-    # painter.run_calibration_test(fine_tune=True)
-
-    # curses.wrapper(painter.paint_manually)
-    # painter.interpolate_calibration_grid(verbose=True)
-
-    # Load calibration data (can be done later or in a different run)
 
     # painter.load_calibration_data()
-    # painter.compute_centroids()
-
-    # time.sleep(3)
-    # painter.fine_tune_calibration()
-    # painter.run_calibration_test(fine_tune=True)
-
-    # Save calibration data
-    # painter.save_calibration_data()
-
+    painter.burn_tumour()
 
