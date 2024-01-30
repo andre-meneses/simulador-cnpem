@@ -7,7 +7,10 @@ from outils import show_wait_destroy
 from Image_processor import ImageProcessor
 
 class SilhouetteTo3D:
+    """A class for converting 2D silhouettes to 3D point clouds."""
+
     def __init__(self):
+        """Initialize the SilhouetteTo3D object."""
         self.points = []
         self.points_cloud = []
         self.coordinates = None
@@ -16,6 +19,7 @@ class SilhouetteTo3D:
         self.center = False
 
     def find_center(self, contour):
+        """Find the center of the silhouette contour."""
         if self.center == False:
             M = cv2.moments(contour)
             if M["m00"] != 0:
@@ -29,10 +33,11 @@ class SilhouetteTo3D:
             self.center = True
 
     def radius(self, point):
-        # return np.sqrt((point[0] - self.cx)**2 + (point[1] - self.cy)**2)
+        """Calculate the radius of a point relative to the center."""
         return (point[0] - self.cx)
 
     def add_silhouette(self, contour, theta):
+        """Add a silhouette contour to the point cloud."""
         x = []
         y = []
         for point in contour:
@@ -43,6 +48,7 @@ class SilhouetteTo3D:
             self.points.append([self.radius(point[0]), np.deg2rad(theta), 209 - point[0][1] - self.cy])
 
     def cyl2cart(self, point):
+        """Convert cylindrical coordinates to Cartesian coordinates."""
         x = point[0] * np.cos(point[1]) + self.cx 
         y = point[0] * np.sin(point[1]) 
         z = point[2] + self.cy
@@ -50,15 +56,15 @@ class SilhouetteTo3D:
         return [x,y,z]
          
     def convert_coordinates(self):
+        """Convert cylindrical coordinates of points to Cartesian coordinates."""
         for point in self.points:
             point_1 = self.cyl2cart(point)
             self.points_cloud.append(point_1)
 
     def plot_cloud(self):
+        """Plot the 3D point cloud."""
         fig = plt.figure()
-        # Add a 3D subplot
         ax = fig.add_subplot(111, projection='3d')
-        # Scatter plot
         x = [point[0] for point in self.points_cloud]
         y = [point[1] for point in self.points_cloud]
         z = [point[2] for point in self.points_cloud]
@@ -67,6 +73,7 @@ class SilhouetteTo3D:
         plt.show()
 
     def generate_solid(self):
+        """Generate a solid object from the point cloud."""
         cloud = pv.PolyData(np.array(self.points_cloud))
         surf = cloud.delaunay_3d()
         voxels = pv.voxelize(surf, check_surface=False)
@@ -74,15 +81,16 @@ class SilhouetteTo3D:
         self.coordinates = np.array([[x, y, z] for x,y,z in coordinates])
 
     def save_coordinates(self, filename='data/coordinates.npy'):
-        # Save coordinates to the specified file
+        """Save the coordinates to a file."""
         np.save(filename, self.coordinates)
         np.save('data/center.npy', [self.cx, self.cy])
 
     def load_coordinates(self, filename='data/coordinates.npy'):
-        # Load coordinates from the specified file
+        """Load the coordinates from a file."""
         self.coordinates = np.load(filename)
 
     def plot_shell(self, plot_type="Surface"):
+        """Plot the 3D surface or voxels."""
         cloud = pv.PolyData(np.array(self.points_cloud))
         surf = cloud.delaunay_3d()
 
@@ -93,6 +101,7 @@ class SilhouetteTo3D:
             voxels.plot()
 
     def plot_slices(self):
+        """Plot slices of the 3D object."""
         sorted_points = self.coordinates[self.coordinates[:, 1].argsort()]
         y_values = sorted_points[:, 1]
         xz_pairs = sorted_points[:, [0, 2]]
