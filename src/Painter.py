@@ -502,9 +502,13 @@ class LaserPainter:
         - None
         """
         with GoniometerController() as controller:
+            input("Turn on light pannel and press enter")
             controller.calibrate_coordinates(0)
 
-            self.compute_centroids(camera_number=2)
+            input("Turn off light pannel and press enter")
+
+            # In order to calibrate laser, compute centroids when facing the laser camera. 
+            self.compute_centroids(camera_number=2) 
 
             if manual:
                 curses.wrapper(painter.set_laser_grid)
@@ -515,6 +519,8 @@ class LaserPainter:
             self.fine_tune_calibration()
             self.save_calibration_data()
             controller.move(-89)
+
+            # In order to make the correspondence voltage - pixe, compute centroids when facing the other camera
             self.compute_centroids()
 
     def burn_tumour(self, static=False, angle_per_step=36):
