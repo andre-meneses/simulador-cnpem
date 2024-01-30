@@ -543,6 +543,7 @@ class LaserPainter:
                 controller.move(89)
 
             steps = 360/angle_per_step
+            steps = int(steps)
 
             for i in range(steps):
                 slices = tumour.generate_slices()
@@ -603,6 +604,6 @@ if __name__ == '__main__':
     # painter.calibration_routine()
     # painter.run_calibration_test()
 
-    # painter.load_calibration_data()
+    painter.load_calibration_data()
     painter.burn_tumour()
 
