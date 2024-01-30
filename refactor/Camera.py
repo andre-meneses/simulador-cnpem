@@ -1,10 +1,32 @@
 import cv2
 
 class Camera:
+    """A class to interact with a camera device using OpenCV.
+
+    Args:
+        camera_number (int): The index of the camera device.
+
+    Attributes:
+        camera_number (int): The index of the camera device.
+
+    Methods:
+        take_picture: Captures a picture from the camera.
+    """
     def __init__(self, camera_number):
         self.camera_number = camera_number
 
     def take_picture(self, output_name=None, return_image=False):
+        """Captures a picture from the camera.
+
+        Args:
+            output_name (str, optional): The file path to save the captured image. Defaults to None.
+            return_image (bool, optional): Whether to return the captured image as an array. Defaults to False.
+
+        Returns:
+            bool or numpy.ndarray or None: If return_image is False, returns True if the capture was successful, 
+                                           False otherwise. If return_image is True, returns the captured image as
+                                           a numpy array if successful, None otherwise.
+        """
         cap = cv2.VideoCapture(self.camera_number)
         if not cap.isOpened():
             print(f"Error: Camera with index {self.camera_number} could not be opened.")
