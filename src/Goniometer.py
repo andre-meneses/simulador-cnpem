@@ -168,6 +168,8 @@ class GoniometerController:
             Exception: If an error occurs during the tomography process.
         """
         camera = Camera(0)
+        
+        input("Turn on light pannel and press enter")
 
         try:
             for i in range(360):
@@ -176,6 +178,8 @@ class GoniometerController:
         except Exception as e:
             print(f"Error during tomography: {e}")
             # Handle or log the exception as needed
+
+        input("Turn off Light Pannel")
 
 if __name__ == '__main__':
     with GoniometerController() as controller:
