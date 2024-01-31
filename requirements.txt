@@ -1,0 +1,8 @@
+matplotlib==3.8.2
+mcp2210_python==1.0.4
+numpy==1.26.3
+opencv_contrib_python_headless==4.9.0.80
+pyserial==3.5
+pyvista==0.43.2
+PyYAML==6.0.1
+scikit_learn==1.4.0
