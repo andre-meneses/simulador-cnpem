@@ -47,7 +47,7 @@ class Runner:
         self.painter = LaserPainter(self.socket_x, self.socket_y, self.cal_x, self.cal_y, self.mcp)  
 
     def _calibrate(self, manual=True):
-        painter.calibration_routine(manual=manual)
+        self.painter.calibration_routine(manual=manual)
 
     def _execute_tomography(self):
 
@@ -83,7 +83,7 @@ class Runner:
         self.painter.burn_tumour()
 
     def _wait_user(self):
-        input("Remove calibration plaque, add tumour and press enter")
+        input("Remove calibration plaque, add tumour and press enter \n")
 
     def execute(self, func):
         self.functions_chain.execute_functions_from(func)
@@ -104,3 +104,5 @@ if __name__=="__main__":
 
     runner = Runner()
     runner.execute(correspondance[argument])
+
+

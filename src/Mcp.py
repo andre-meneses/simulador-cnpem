@@ -20,5 +20,3 @@ def Mcp():
     mcp.set_gpio_output_value(0, False)
     
     return mcp
-
-

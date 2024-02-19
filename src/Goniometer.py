@@ -115,7 +115,7 @@ class GoniometerController:
             if verbose:
                 print(state)
 
-    def calibrate_goniometer(self, camera):
+    def calibrate_goniometer(self, camera, verbose=False):
         """
         Calibrates the goniometer device using image processing.
 
@@ -129,11 +129,13 @@ class GoniometerController:
         angle_areas = []
 
         try:
+            print("Adjusting the panels' positioning")
             for i in range(50):
                 area = self.processor.find_contour(i, camera)
                 angle_areas.append([angle, area])
                 self.move(self.MOVEMENT_INCREMENT)
-                print(i)
+                if verbose:
+                    print(i)
                 angle += self.MOVEMENT_INCREMENT
 
             self.move(-5)
@@ -144,7 +146,8 @@ class GoniometerController:
                 area = self.processor.find_contour(i * -1, camera)
                 angle_areas.append([angle, area])
                 self.move(-self.MOVEMENT_INCREMENT)
-                print(i * -1)
+                if verbose:
+                    print(i * -1)
                 angle -= self.MOVEMENT_INCREMENT
 
             angle_areas = np.array(angle_areas)
@@ -153,9 +156,13 @@ class GoniometerController:
 
             self.move(5)
 
-            print(f"Max area:{mpoint[1]}, angle:{mpoint[0]}")
+            if verbose:
+                print(f"Max area:{mpoint[1]}, angle:{mpoint[0]}")
+
             self.move(mpoint[0])
+
             return mpoint[0]
+
         except Exception as e:
             print(f"Error during calibration: {e}")
             # Handle or log the exception as needed
@@ -170,6 +177,7 @@ class GoniometerController:
         camera = Camera(0)
         
         input("Turn on light pannel and press enter")
+        print("Performing Tomography")
 
         try:
             for i in range(360):
@@ -185,5 +193,6 @@ if __name__ == '__main__':
     with GoniometerController() as controller:
         controller.connect()
         # controller.perform_tomography()
+        controller.move(180)
         controller.disconnect()
 

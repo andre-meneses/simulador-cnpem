@@ -186,7 +186,7 @@ class LaserPainter:
                 time.sleep(3)
         self.laser_controller.switch_laser('off')
 
-    def scan_diagonal(self, center, n_points, coordinate, verbose=True):
+    def scan_diagonal(self, center, n_points, coordinate, verbose=False):
         """
         Scans the diagonal area around a given center point.
 
@@ -236,7 +236,7 @@ class LaserPainter:
                 if green > greenest_value:
                     greenest_value = green
                     greenest_position = (x,y)
-                    print((x,y))
+                    # print((x,y))
                     camera.take_picture(f"images/calibration/green_{coordinate}.jpg")
 
                 y += y_step
@@ -256,7 +256,7 @@ class LaserPainter:
         else:
             return greenest_position, greenest_value
     
-    def scan_calibration(self, center, n_points, coordinate, verbose=True, line=15, mb=-10):
+    def scan_calibration(self, center, n_points, coordinate, verbose=False, line=15, mb=-10):
         """
         Scans a calibration area around a given center point.
 
@@ -292,7 +292,7 @@ class LaserPainter:
 
         y = y_top_left
 
-        print()
+        # print()
 
         while y < y_top_left + line * self.y_calibration_factor:
             self.move('y', y)
@@ -334,6 +334,8 @@ class LaserPainter:
         """
         Fine tunes the calibration by scanning diagonals and calibration areas for each grid point.
         """
+        print("Fine tune calibration")
+        print("------------------------")
         for i in range(3):
             for j in range(3):
                 x = self.calibration_grid[i,j,0]
@@ -349,9 +351,9 @@ class LaserPainter:
                 self.fine_grid[i,j,0] = np.mean(x_values)
                 self.fine_grid[i,j,1] = np.mean(y_values)
 
-                print(f"Green map: {self.green_map}")
-                print(f"Fine_grid: {self.fine_grid[i,j]}")
-                print()
+                # print(f"Green map: {self.green_map}")
+                # print(f"Fine_grid: {self.fine_grid[i,j]}")
+                # print()
                 self.green_map = []
                 time.sleep(2)
    
@@ -503,7 +505,7 @@ class LaserPainter:
         """
         with GoniometerController() as controller:
             input("Turn on light pannel and press enter")
-            controller.calibrate_coordinates(0)
+            controller.calibrate_goniometer(0)
 
             input("Turn off light pannel and press enter")
 
@@ -511,8 +513,14 @@ class LaserPainter:
             self.compute_centroids(camera_number=2) 
 
             if manual:
-                curses.wrapper(painter.set_laser_grid)
-                painter.interpolate_calibration_grid(verbose=True)
+                    print("-----------------------------------------")
+                print("Manual Calibration")
+                print("Align the beam with the initial orifice and press 'a'. Next, move the beam to the final orifice at coordinates (3,3) and press 'c'. Lastly, press 'q' to complete the process.")
+                print("-----------------------------------------")
+
+            if manual:
+                curses.wrapper(self.set_laser_grid)
+                self.interpolate_calibration_grid(verbose=False)
             else:
                 self.load_calibration_data()
 
@@ -544,6 +552,9 @@ class LaserPainter:
 
             steps = 360/angle_per_step
             steps = int(steps)
+
+            print("Burning Tumour")
+            print("----------------------------")
 
             for i in range(steps):
                 slices = tumour.generate_slices()

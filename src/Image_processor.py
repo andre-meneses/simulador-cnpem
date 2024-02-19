@@ -2,6 +2,7 @@ import cv2 as cv
 import outils
 import numpy as np
 from outils import show_wait_destroy
+from Camera import Camera
 
 class ImageProcessor:
     """

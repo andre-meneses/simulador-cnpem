@@ -47,7 +47,7 @@ class SilhouetteTo3D:
 
             self.points.append([self.radius(point[0]), np.deg2rad(theta), 209 - point[0][1] - self.cy])
 
-    def cyl2cart(self, point):
+    def _cyl2cart(self, point):
         """Convert cylindrical coordinates to Cartesian coordinates."""
         x = point[0] * np.cos(point[1]) + self.cx 
         y = point[0] * np.sin(point[1]) 
@@ -58,7 +58,7 @@ class SilhouetteTo3D:
     def convert_coordinates(self):
         """Convert cylindrical coordinates of points to Cartesian coordinates."""
         for point in self.points:
-            point_1 = self.cyl2cart(point)
+            point_1 = self._cyl2cart(point)
             self.points_cloud.append(point_1)
 
     def plot_cloud(self):
