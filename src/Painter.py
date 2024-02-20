@@ -306,7 +306,8 @@ class LaserPainter:
                 processor = ImageProcessor(camera.take_picture(return_image=True))
 
                 brght = processor.compute_brightness(self.contours[3*i + j])
-                # brght = processor.avg_green()
+
+                self.whole_green_map.append([x,y,brght])
 
                 if brght == max_brght:
                     # Add to green_map if brightness equals max_brght
@@ -328,6 +329,7 @@ class LaserPainter:
             y += y_step
 
         self.laser_controller.switch_laser('off')
+
         return max_brght
 
     def fine_tune_calibration(self):
@@ -354,7 +356,9 @@ class LaserPainter:
                 # print(f"Green map: {self.green_map}")
                 # print(f"Fine_grid: {self.fine_grid[i,j]}")
                 # print()
+                self.plot_green_map(f'green_map_{i}_{j}')
                 self.green_map = []
+                self.whole_green_map = []
                 time.sleep(2)
    
     def plot_green_map(self, name):
@@ -383,7 +387,8 @@ class LaserPainter:
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
         plt.title('Green Map Color Plot')
-        plt.savefig(f"{name}", format=pdf)
+        plt.savefig(f"{name}", format='pdf')
+        plt.clf()
         # plt.show()
 
     def save_calibration_data(self, filename="data/calibration_data.pkl"):

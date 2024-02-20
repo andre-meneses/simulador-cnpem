@@ -193,6 +193,6 @@ if __name__ == '__main__':
     with GoniometerController() as controller:
         controller.connect()
         # controller.perform_tomography()
-        controller.move(180)
+        controller.move(89)
         controller.disconnect()
 
