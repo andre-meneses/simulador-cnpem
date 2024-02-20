@@ -75,6 +75,7 @@ class Runner:
     
         s23.convert_coordinates()
         s23.generate_solid()
+        s23.plot_shell()
 
         s23.save_coordinates()
 

@@ -513,7 +513,7 @@ class LaserPainter:
             self.compute_centroids(camera_number=2) 
 
             if manual:
-                    print("-----------------------------------------")
+                print("-----------------------------------------")
                 print("Manual Calibration")
                 print("Align the beam with the initial orifice and press 'a'. Next, move the beam to the final orifice at coordinates (3,3) and press 'c'. Lastly, press 'q' to complete the process.")
                 print("-----------------------------------------")
