@@ -520,7 +520,7 @@ class LaserPainter:
             if manual:
                 print("-----------------------------------------")
                 print("Manual Calibration")
-                print("Align the beam with the initial orifice and press 'a'. Next, move the beam to the final orifice at coordinates (3,3) and press 'c'. Lastly, press 'q' to complete the process.")
+                print("Align the beam with the initial orifice and press 'a'. \n Next, move the beam to the final orifice at coordinates (3,3) and press 'c'. \n Lastly, press 'q' to complete the process.")
                 print("-----------------------------------------")
 
             if manual:
