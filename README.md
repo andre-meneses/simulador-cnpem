@@ -3,6 +3,7 @@
 ## Table of Contents
 1. [Project Overview](#project-overview)
    - [Context](#context)
+   - [Physical Implementation](#physical-implementation)
    - [System Architecture](#system-architecture)
    - [Implementation Details](#implementation-details)
      * [Calibration Process](#1-calibration-process)
@@ -26,14 +27,31 @@
    - [License](#license)
 
 ## Project Overview
-This project implements a simulator for proton beam therapy with vertically positioned patients. The system aims to optimize oncological treatment delivery by simulating patient positioning and beam targeting, enabling interdisciplinary collaboration between engineers, medical physicists, and oncologists.
 
 ### Context
 Proton beam therapy represents a promising frontier in oncological treatment, offering advantages over conventional radiotherapy modalities. The ability of protons to deposit most of their energy at the Bragg peak allows for concentrated radiation dose delivery to tumors while minimizing exposure to surrounding healthy tissues. This characteristic is particularly advantageous for tumors located near vital organs and in pediatric treatments.
 
 However, widespread adoption of proton therapy faces technical and economic challenges, including high infrastructure costs and the need for extreme precision in beam targeting. This project addresses these challenges through an innovative approach of rotating the patient instead of the beam, potentially reducing operational costs and increasing treatment accessibility.
 
+### Physical Implementation
+Below are images of the actual device implementation:
+
+<table>
+<tr>
+<td><img src="figures/dispositivos/dispositivo.jpeg" alt="Device with calibration plate" width="400"/></td>
+<td><img src="figures/dispositivos/dispositivo_tumor.jpeg" alt="Device with tumor" width="400"/></td>
+</tr>
+<tr>
+<td align="center"><em>Device setup with calibration plate</em></td>
+<td align="center"><em>Device setup with tumor model</em></td>
+</tr>
+</table>
+
+The device consists of a goniometer placed between two cameras, with a laser system controlled by mirrors for beam targeting. The setup allows for precise calibration and tumor targeting through controlled rotations and beam positioning.
+
 ### System Architecture
+
+<img src="figures/diagrama_dispositivo.png" alt="System diagram" width="800"/>
 
 The simulator consists of several key components:
 
@@ -60,6 +78,10 @@ The calibration involves multiple steps:
 - Captures 360 tumor images at 1-degree intervals
 - Generates 3D tumor model from silhouettes
 - Converts pixel coordinates to cylindrical coordinates for processing
+
+<img src="figures/models/ang1mod.png" alt="3D Model View 1" width="200"/> <img src="figures/models/ang2mod.png" alt="3D Model View 2" width="200"/> <img src="figures/models/ang3mod.png" alt="3D Model View 3" width="200"/> <img src="figures/models/ang4mod.png" alt="3D Model View 4" width="200"/>
+
+*Different views of the generated 3D tumor model*
 
 #### 3. Irradiation Process
 - Establishes voltage-to-pixel correspondence through linear interpolation
